@@ -1,45 +1,39 @@
 import React, { useEffect, useState, useRef, createRef } from 'react';
 import { withRouter } from 'react-router-dom';
-import Test from '../../components/TestUI'
+import Test from '../components/TestUI'
 
 const TestForm = ({ history }) => {
-    const localStream=useRef();
-    const RTCObjects =useRef(Array.from({ length:100 },() => {return { pcLocal: null , pcRemote: null }}));
-    const [remoteRefs, setRemoteRefs]=useState([]);
-    // const remoteRefs = Array.from({length: 100}, () => createRef())
+    const connections = history.location? history.location.state.connections : 1;
 
-    const [connections, setConnections] = useState(3);
-    const [foundLocal, setFoundLocal] = useState(false);
+    const localStream=useRef();
+    const RTCObjects =useRef(Array.from({ length:connections },() => {return { pcLocal: null , pcRemote: null }}));
+    //const remoteRefs = useRef([]);
+    const remoteRefs = useRef(Array.from({ length:connections },() => null))
     const [isConnected, setIsConnected] = useState(false);
 
-    const offerOptions = {
-        offerToReceiveAudio: 1,
-        offerToReceiveVideo: 1
-    };
+    const [audio, setAudio] = useState(history.location? history.location.state.audio : true);
+    const [video, setVideo] = useState(history.location? history.location.state.video : true);
+
+    const [view,setView] = useState('sidebar')
 
     useEffect(() => {
         console.log('init!')
         init();
-    },[])
+    },[view])
 
-    useEffect(() => {
-        console.log("connection")
-        setRemoteRefs(remoteRefs => (
-            Array(connections).fill().map((_,i) => remoteRefs[i] || createRef())
-        ));
-    },[connections]);
+
 
     const init = async () => {
         try {
-            await navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(stream => {
+            await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
                 localStream.current.srcObject = stream;
                 console.log("New LocalStream")
             });
-            setFoundLocal(true);
-            // call();
+            localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
+            localStream.current.srcObject.getVideoTracks()[0].enabled = video;
+            call();
         } catch (e) {
             console.log("getUserMedia error",e)
-            setFoundLocal(false);
         }
     }
 
@@ -55,7 +49,7 @@ const TestForm = ({ history }) => {
             localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].pcLocal.addTrack(track, localStream.current.srcObject));
 
             RTCObjects.current[i].pcLocal
-                .createOffer(offerOptions)
+                .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
                 .then((event)=>gotDescriptionLocal(event,i), onCreateSessionDescriptionError);
             setIsConnected(true)
         }
@@ -82,8 +76,10 @@ const TestForm = ({ history }) => {
     }
 
     function gotRemoteStream(e, idx) {
-        if (RTCObjects.current[idx].stream !== e.streams[0]) {
-            remoteRefs[idx].current.srcObject = e.streams[0];
+        if (remoteRefs.current[idx] !== e.streams[0]) {
+            remoteRefs.current[idx] = e.streams[0];
+            const vid = document.getElementById(`remote-video ${idx}`);
+            if(vid) { vid.srcObject = remoteRefs.current[idx] }
             console.log(`pc${idx}: received remote stream`);
         } else {
             console.log("test failed!")
@@ -125,18 +121,39 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcRemote = null;
         }
         setIsConnected(false)
+        history.push('/');
+    }
+
+    const toggleAudio = () => {
+        localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
+        setAudio(!audio);
+    }
+
+    const toggleVideo = () => {
+        localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
+        setVideo(!video);
+    }
+
+    const toggleView = () => {
+        if(view=="sidebar"){
+            setView("tiles")
+        } else {
+            setView("sidebar")
+        }
     }
 
     return(
         <Test
-            history={history}
-            init={init}
-            call={call}
+            audio={audio}
+            video={video}
+            toggleAudio={toggleAudio}
+            toggleVideo={toggleVideo}
+            view={view}
+            toggleView={toggleView}
             hangup={hangup}
             connections={connections}
             localStreamRef={localStream}
             remoteStreamRefs={remoteRefs}
-            foundLocal={foundLocal}
             isConnected={isConnected}
         />
     );

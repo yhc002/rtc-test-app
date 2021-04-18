@@ -2,37 +2,117 @@
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+div#await-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 98vh;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+div#await-video-container {
+  position: relative;
+  background:#222;
+  top: 0;
+  left: 0;
+  max-width: 740px;
+  max-height: 416px;
+  width: 100%;
+  height: 100%;
+
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+video#await-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+div#await-video-controls {
+  position: absolute;
+  display: flex;
+  bottom: 0;
+  z-index: 10;
+  width: 100%;
+  justify-content: center;
+}
+
+div#await-controls {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+div#call-main {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  width: 100%;
+  height: 98vh;
+}
+
+div#call-videos {
+  background:#222;
+  width: 100%;
+  height:90vh;
+}
+
+
+div#call-videos-sidebar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+div#focus {
+  width: 85vw;
+}
+
+div#sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 15vw;
+}
+
+video#focus-video {
+  max-width: 1366px;
+  width: 100%;
+}
+
+video#sidebar-video {
+  max-width: 219px;
+  width: 100%;
+}
+
+div#call-videos-tiles {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+video#tile-video {
+  max-width: 768px;
+  width: 100%;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+div#call-controls {
+  display: flex;
+  width: 100%;
+  height: 8vh;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button#round-button {
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+}
+
+svg {
+  height: 2em;
+  width: 2em;
 }

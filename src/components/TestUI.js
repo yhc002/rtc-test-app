@@ -1,39 +1,44 @@
 import React from 'react';
+import { BiCamera, BiCameraOff, BiMicrophone, BiMicrophoneOff, BiPhone } from "react-icons/bi";
 
-const TestUI = ({ history, init, call, hangup, connections, localStreamRef, remoteStreamRefs, foundLocal, isConnected }) => {
+const TestUI = ({ audio, video, toggleAudio, toggleVideo, view, toggleView, hangup, connections, localStreamRef, remoteStreamRefs, remoteStreams, isConnected }) => {
     return(
         <React.Fragment>
             <main>
-                <div id="main">
-                    <p>
-                        Demo 2: RTCPeerConnection을 이용하여 영상을 송수신합니다.
-                    </p>
-                    <div id="demo2layout">
-                        <div id="demo2sublayout">
-                            {/* 송신자의 영상 */}
-                            <video ref={localStreamRef} autoPlay={true}  /> 
-                            <button onClick={init} disabled={foundLocal}>
-                                디바이스 연결
+                <div id="call-main">
+                    <div id="call-videos">
+                        {
+                            view == 'sidebar'?
+                            <div id="call-videos-sidebar">
+                                <div id="focus">
+                                    <video id="focus-video" ref={localStreamRef} autoPlay={true}  />
+                                </div> 
+                                <div id="sidebar">
+                                    {Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} autoPlay/>)}
+                                </div>
+                            </div>
+                            :
+                            <div id="call-videos-tiles">
+                                <video ref={localStreamRef} autoPlay={true}  />
+                                {Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} autoPlay/>)} 
+                            </div> 
+                        }
+                    </div> 
+                    <div id="call-controls">
+                        <div />
+                        <div id="button-group">
+                            <button id="round-button" onClick={toggleAudio}>
+                                { audio ? <BiMicrophone /> : <BiMicrophoneOff /> }
+                            </button>
+                            <button id="round-button" onClick={toggleVideo}>
+                                { video? <BiCamera /> : <BiCameraOff /> }
+                            </button>
+                            <button id="round-button" onClick={hangup} disabled={!isConnected}>
+                                <BiPhone />
                             </button>
                         </div>
-
-                        <div id="demo2sublayout">
-                            {/* 수신자의 영상 */}
-                            {/* <video ref={remoteStreamRefs} autoPlay={true}  />  */}
-                            {remoteStreamRefs.map(ref=><video ref={ref} autoPlay={true}  />)}
-                            <div id="button-group">
-                                <button id="positive" onClick={()=>call()} disabled={!foundLocal||isConnected}>
-                                    통화
-                                </button>
-                                <button id="negative" onClick={hangup} disabled={!isConnected}>
-                                    통화 끊기
-                                </button>
-                            </div>
-                        </div>
+                        <button onClick={toggleView}>view</button>
                     </div>
-                    <button id="go-back" onClick={()=>history.push('/')}>
-                        돌아가기
-                    </button>
                 </div>
             </main>
         </React.Fragment>
