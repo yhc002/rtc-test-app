@@ -1,7 +1,7 @@
 import React from 'react';
 import { BiCamera, BiCameraOff, BiMicrophone, BiMicrophoneOff, BiPhone } from "react-icons/bi";
 
-const TestUI = ({ audio, video, toggleAudio, toggleVideo, view, toggleView, hangup, connections, localStreamRef, remoteStreamRefs, remoteStreams, isConnected }) => {
+const TestUI = ({ audio, video, toggleAudio, toggleVideo, view, toggleView, hangup, connections, localStreamRef, isConnected, checkStats }) => {
     return(
         <React.Fragment>
             <main>
@@ -14,7 +14,7 @@ const TestUI = ({ audio, video, toggleAudio, toggleVideo, view, toggleView, hang
                                     <video id="focus-video" ref={localStreamRef} autoPlay={true}  />
                                 </div> 
                                 <div id="sidebar">
-                                    {Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} autoPlay/>)}
+                                    {Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} onClick={()=>checkStats(i)} autoPlay/>)}
                                 </div>
                             </div>
                             :

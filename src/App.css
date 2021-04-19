@@ -2,8 +2,21 @@
   text-align: center;
 }
 
+.divider{
+  position:absolute;
+  left:50%;
+  top:10%;
+  bottom:10%;
+  border-left:1px solid white;
+}
+
+button {
+  padding: 10px 10px;
+}
+
 div#await-main {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -41,6 +54,10 @@ div#await-video-controls {
 
 div#await-controls {
   display: flex;
+  margin-left: 10px;
+  max-height: 150px;
+  height: 100%;
+  justify-content: space-around;
   flex-direction: column;
   align-items: center;
 }
@@ -48,6 +65,7 @@ div#await-controls {
 div#call-main {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   flex-direction: column;
   width: 100%;
   height: 98vh;
@@ -79,6 +97,7 @@ div#sidebar {
 
 video#focus-video {
   max-width: 1366px;
+  max-height: 88vh;
   width: 100%;
 }
 
@@ -89,8 +108,9 @@ video#sidebar-video {
 
 div#call-videos-tiles {
   display: flex;
-  flex-wrap: wrap;
+  flex-flow: wrap;
   justify-content: center;
+  align-items: center;
 }
 
 video#tile-video {
@@ -100,7 +120,7 @@ video#tile-video {
 
 div#call-controls {
   display: flex;
-  width: 100%;
+  width: 99%;
   height: 8vh;
   justify-content: space-between;
   align-items: center;

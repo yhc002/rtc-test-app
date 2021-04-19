@@ -18,6 +18,7 @@ const TestForm = ({ history }) => {
 
     useEffect(() => {
         console.log('init!')
+        hangup(false);
         init();
     },[view])
 
@@ -109,7 +110,7 @@ const TestForm = ({ history }) => {
         console.log(`Failed to add ICE candidate: ${error.toString()}`);
     }
 
-    function hangup() {
+    function hangup(isLeave) {
         console.log('Ending calls');
         
         for(let i=0;i<connections;i++) {
@@ -121,7 +122,8 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcRemote = null;
         }
         setIsConnected(false)
-        history.push('/');
+        if(isLeave)
+            history.push('/');
     }
 
     const toggleAudio = () => {
@@ -142,6 +144,34 @@ const TestForm = ({ history }) => {
         }
     }
 
+    const checkStats = async (idx) => {
+        if(RTCObjects.current[idx].pcLocal){
+            await RTCObjects.current[idx].pcLocal.getStats(null).then(
+                showRemoteStats, err => console.log(err)
+            )
+        }
+        if(RTCObjects.current[idx].pcRemote){
+            await RTCObjects.current[idx].pcRemote.getStats(null).then(
+                showLocalStats, err => console.log(err)
+            )
+        }
+    }
+
+    const showRemoteStats = (results) => {
+        results.forEach(report => {
+            if(report.id.indexOf('sender')>0)
+                console.log('stats remote',report)
+        })
+    }
+    const showLocalStats = (results) => {
+        results.forEach(report => {
+            if(report.id.indexOf('receiver')>0)
+                console.log('stats local receiver',report)
+            if(report.id.indexOf('Stream')>0)
+            console.log('stats local Stream',report)
+        })
+    }
+
     return(
         <Test
             audio={audio}
@@ -150,11 +180,12 @@ const TestForm = ({ history }) => {
             toggleVideo={toggleVideo}
             view={view}
             toggleView={toggleView}
-            hangup={hangup}
+            hangup={()=>hangup(true)}
             connections={connections}
             localStreamRef={localStream}
             remoteStreamRefs={remoteRefs}
             isConnected={isConnected}
+            checkStats={checkStats}
         />
     );
 }
