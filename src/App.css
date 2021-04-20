@@ -77,6 +77,13 @@ div#call-videos {
   height:90vh;
 }
 
+video#my-video {
+  position: fixed;
+  top: 0;
+  right: 0;
+  max-width: 86px;
+  width: 100%;
+}
 
 div#call-videos-sidebar {
   display: flex;

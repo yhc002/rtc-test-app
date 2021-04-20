@@ -1,38 +1,56 @@
 import React from 'react';
-import { BiCamera, BiCameraOff, BiMicrophone, BiMicrophoneOff } from "react-icons/bi";
+import Button from '@material-ui/core/Button'
+import Grid from '@material-ui/core/Grid';
+import { Videocam, VideocamOff, Mic, MicOff } from "@material-ui/icons";
+import { useStyles } from '../MuiTheme';
 
 const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggleVideo, initCall, localStream, foundLocal }) => {
+    const classes = useStyles();
+
     return(
         <React.Fragment>
             <main>
-                <div id="await-main">
-                    <div id="await-video-container">
+                <Grid container id="await-main" spacing={10}>
+                    <Grid item className={classes.awaitVideoContainer}>
                         <video id="await-video" ref={localStream} autoPlay/>
                         <div id='await-video-controls'>
-                            <button id="round-button" onClick={toggleAudio}>
-                                { audio ? <BiMicrophone /> : <BiMicrophoneOff /> }
-                            </button>
-                            <button id="round-button" onClick={toggleVideo}>
-                                { video? <BiCamera /> : <BiCameraOff /> }
-                            </button>
+                            <Button variant="contained" className={classes.roundButton} onClick={toggleAudio}>
+                                { audio ? <Mic /> : <MicOff /> }
+                            </Button>
+                            <Button variant="contained" className={classes.roundButton} onClick={toggleVideo}>
+                                { video? <Videocam /> : <VideocamOff /> }
+                            </Button>
                         </div>   
-                    </div>
-                    <div id="await-controls">
-                        <span>Connections: {connections}</span>
-                        <div id="button-group">
-                            <button id="round-button" onClick={()=>setConnections(connections+1)} disabled={connections>=5}>
-                                +
-                            </button>
-                            <button id="round-button" onClick={()=>setConnections(connections-1)} disabled={connections<=1}>
-                                -
-                            </button>
-                        </div>
-                        <button onClick={initCall} disabled={!foundLocal}>
-                            지금 참여하기
-                        </button>
-                    </div>
-                </div>
+                    </Grid>
+                    <Grid item>
+                        <Grid container direction="column" spacing={1} alignItems="center">
+                            <Grid item>
+                                <span>Connections: {connections}</span>
+                            </Grid>
+                            <Grid item>
+                                <Grid container spacing={1}>
+                                    <Grid item>
+                                        <Button variant="contained" className={classes.roundButton} onClick={()=>setConnections(connections+1)} disabled={connections>=5}>
+                                            +
+                                        </Button>
+                                    </Grid>
+                                    <Grid item>
+                                        <Button variant="contained" className={classes.roundButton} onClick={()=>setConnections(connections-1)} disabled={connections<=1}>
+                                            -
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                            <Grid item>
+                                <Button variant="contained" onClick={initCall} disabled={!foundLocal}>
+                                    지금 참여하기
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </main>
+            <dialog open={connections==3}>test dialog</dialog>
         </React.Fragment>
     )
 }

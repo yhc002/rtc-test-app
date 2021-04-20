@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef, createRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { withRouter } from 'react-router-dom';
 import Test from '../components/TestUI'
 
 const TestForm = ({ history }) => {
-    const connections = history.location? history.location.state.connections : 1;
+    const connections = history.location.state.connections? history.location.state.connections : 1;
 
     const localStream=useRef();
     const RTCObjects =useRef(Array.from({ length:connections },() => {return { pcLocal: null , pcRemote: null }}));
@@ -15,6 +15,9 @@ const TestForm = ({ history }) => {
     const [video, setVideo] = useState(history.location? history.location.state.video : true);
 
     const [view,setView] = useState('sidebar')
+
+    const [statsIsOpen, setStatsIsOpen] = useState(false);
+    const [statMessages, setStatMessages] = useState(['', '']);
 
     useEffect(() => {
         console.log('init!')
@@ -144,32 +147,54 @@ const TestForm = ({ history }) => {
         }
     }
 
-    const checkStats = async (idx) => {
-        if(RTCObjects.current[idx].pcLocal){
-            await RTCObjects.current[idx].pcLocal.getStats(null).then(
-                showRemoteStats, err => console.log(err)
+    const openStats = async (idx) => {
+        let messages=['',''];
+        console.log('stats re',idx)
+        if(RTCObjects.current[idx] && RTCObjects.current[idx].pcLocal){
+            const localStat = await RTCObjects.current[idx].pcLocal.getStats(null).then(
+                showRemoteStats, err => err.toString()
             )
+            messages[0] = localStat;
         }
-        if(RTCObjects.current[idx].pcRemote){
-            await RTCObjects.current[idx].pcRemote.getStats(null).then(
-                showLocalStats, err => console.log(err)
+        if(RTCObjects.current[idx] && RTCObjects.current[idx].pcRemote){
+            const remoteStat = await RTCObjects.current[idx].pcRemote.getStats(null).then(
+                showLocalStats, err => err.toString()
             )
+            messages[1] = remoteStat;
         }
+        setStatMessages(messages);
+        setStatsIsOpen(true);
     }
 
     const showRemoteStats = (results) => {
+        let stats=[]
         results.forEach(report => {
-            if(report.id.indexOf('sender')>0)
-                console.log('stats remote',report)
-        })
+            if(report.id.indexOf('sender')>0){
+                let key;
+                for(key in report){
+                    stats.push(<p>{key} : {report[key]}</p>);
+                }
+            }
+        });
+        return stats;
     }
     const showLocalStats = (results) => {
+        let stats=[]
         results.forEach(report => {
-            if(report.id.indexOf('receiver')>0)
-                console.log('stats local receiver',report)
-            if(report.id.indexOf('Stream')>0)
-            console.log('stats local Stream',report)
-        })
+            if(report.id.indexOf('receiver')>0){
+                let key;
+                for(key in report){
+                    stats.push(<p>{key} : {report[key]}</p>);
+                }
+            }
+            if(report.id.indexOf('Stream')>0){
+                let key;
+                for(key in report){
+                    stats.push(<p>{key} : {report[key]}</p>);
+                }
+            }
+        });
+        return stats;
     }
 
     return(
@@ -185,7 +210,10 @@ const TestForm = ({ history }) => {
             localStreamRef={localStream}
             remoteStreamRefs={remoteRefs}
             isConnected={isConnected}
-            checkStats={checkStats}
+            statsIsOpen={statsIsOpen}
+            openStats={(idx)=>openStats(idx)}
+            closeStats={()=>setStatsIsOpen(false)}
+            statMessages={statMessages}
         />
     );
 }
