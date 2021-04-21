@@ -7,7 +7,7 @@ const TestForm = ({ history }) => {
 
     const localStream=useRef();
     const RTCObjects =useRef(Array.from({ length:connections },() => {return { pcLocal: null , pcRemote: null }}));
-    //const remoteRefs = useRef([]);
+
     const remoteRefs = useRef(Array.from({ length:connections },() => null))
     const [isConnected, setIsConnected] = useState(false);
 
@@ -21,10 +21,50 @@ const TestForm = ({ history }) => {
 
     useEffect(() => {
         console.log('init!')
-        hangup(false);
         init();
-    },[view])
+    },[])
 
+    useEffect(() => {
+        let vid;
+        let height; 
+        let width;
+        let n;
+        if(view==="sidebar"){
+            height=100/connections;
+        } else {
+            n = Math.ceil(Math.sqrt(Math.min(connections,49)))
+            width=100/n;
+            height=100/n;
+        }
+        for(let idx=0;idx<connections;idx++) {
+            vid = document.getElementById(`remote-video ${idx}`);
+            
+            if(view==="sidebar") {
+                vid.style.display="block";
+                vid.style.position="absolute";
+                if(idx===0){
+                    vid.style.left=0;
+                    vid.style.width="80vw"; 
+                    vid.style.height="100%";
+                } else {
+                    vid.style.left="80vw";
+                    vid.style.height=`calc(${height}% - ${64/(connections-1)}px)`;
+                    vid.style.top=`calc(64px + ${height*(idx-1)}% - ${64/(connections-1)*(idx-1)}px)`;
+                    vid.style.width="20vw";
+                }
+            } else {
+                if(idx>49){
+                    vid.style.display="none";
+                }
+                vid.style.position="relative";
+                vid.style.left=0;
+                vid.style.top=0;
+                vid.style.width=`${width}%`;
+                vid.style.height=`${height}%`;
+            }
+            if(vid && !vid.srcObject) { vid.srcObject = remoteRefs.current[idx] }
+        }
+    },[view])
 
 
     const init = async () => {
@@ -172,7 +212,7 @@ const TestForm = ({ history }) => {
             if(report.id.indexOf('sender')>0){
                 let key;
                 for(key in report){
-                    stats.push(<p>{key} : {report[key]}</p>);
+                    stats.push(<p>{key} : {report[key].toString()}</p>);
                 }
             }
         });
@@ -184,13 +224,13 @@ const TestForm = ({ history }) => {
             if(report.id.indexOf('receiver')>0){
                 let key;
                 for(key in report){
-                    stats.push(<p>{key} : {report[key]}</p>);
+                    stats.push(<p>{key} : {report[key].toString()}</p>);
                 }
             }
             if(report.id.indexOf('Stream')>0){
                 let key;
                 for(key in report){
-                    stats.push(<p>{key} : {report[key]}</p>);
+                    stats.push(<p>{key} : {report[key].toString()}</p>);
                 }
             }
         });
@@ -203,7 +243,6 @@ const TestForm = ({ history }) => {
             video={video}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
-            view={view}
             toggleView={toggleView}
             hangup={()=>hangup(true)}
             connections={connections}

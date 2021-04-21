@@ -47,6 +47,7 @@ div#await-video-controls {
   position: absolute;
   display: flex;
   bottom: 0;
+  left: 0;
   z-index: 10;
   width: 100%;
   justify-content: center;
@@ -72,16 +73,35 @@ div#call-main {
 }
 
 div#call-videos {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   background:#222;
   width: 100%;
   height:90vh;
 }
 
-video#my-video {
+div#my-area {
   position: fixed;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  top:0;
+  right:0;
+  z-index: 10;
+  background-color: white;
+}
+
+video#my-video {
+  position: relative;
   top: 0;
   right: 0;
-  max-width: 86px;
+  height: 64px;
+}
+
+video#remote-video {
   width: 100%;
 }
 
@@ -91,10 +111,6 @@ div#call-videos-sidebar {
   justify-content: space-between;
 }
 
-div#focus {
-  width: 85vw;
-}
-
 div#sidebar {
   display: flex;
   flex-direction: column;
@@ -102,13 +118,16 @@ div#sidebar {
   width: 15vw;
 }
 
-video#focus-video {
-  max-width: 1366px;
+#focus-video {
+  max-width: 80vw;
   max-height: 88vh;
-  width: 100%;
+  width: 1366px;
 }
 
-video#sidebar-video {
+#sidebar-video {
+  position: relative;
+  top: 0;
+  right: 0;
   max-width: 219px;
   width: 100%;
 }
@@ -118,9 +137,10 @@ div#call-videos-tiles {
   flex-flow: wrap;
   justify-content: center;
   align-items: center;
+  height: 100%;
 }
 
-video#tile-video {
+#tile-video {
   max-width: 768px;
   width: 100%;
 }
@@ -131,15 +151,4 @@ div#call-controls {
   height: 8vh;
   justify-content: space-between;
   align-items: center;
-}
-
-button#round-button {
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-}
-
-svg {
-  height: 2em;
-  width: 2em;
 }

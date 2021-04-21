@@ -22,7 +22,9 @@ export const useStyles = makeStyles(() => ({
         maxHeight: "416px",
         width: "100%",
         height: "100%",
-        padding: 0,
+    },
+    awaitVideoControls: {
+      width:"30vw"
     },
     roundButton: {
         borderRadius: "50%",

@@ -16,9 +16,7 @@ export default function StatsPopup({ open, messages, confirm }) {
                 <Grid container wrap="nowrap" justify="space-between" spacing={3}>
                     <Grid item>
                         Local
-                        <p>
-                            {messages[0]}
-                        </p>
+                        {messages[0]}
                         
                     </Grid>
                     <Grid item>
@@ -26,9 +24,7 @@ export default function StatsPopup({ open, messages, confirm }) {
                     </Grid>
                     <Grid item>
                         Remote
-                        <span>
-                            {messages[1]}
-                        </span>
+                        {messages[1]}
                     </Grid>
                 </Grid>
             </DialogContent>

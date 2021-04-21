@@ -9,6 +9,7 @@ const HomeForm = ({ history }) => {
     const [connections, setConnections] = useState(1);
     const [audio, setAudio] = useState(true);
     const [video, setVideo] = useState(true);
+    const [isOpen,setIsOpen] = useState(false);
 
     useEffect(()=>{getMedia()},[]);
 
@@ -52,6 +53,8 @@ const HomeForm = ({ history }) => {
             localStream={localStream}
             foundLocal={foundLocal}
             history={history} 
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
         />
     );
 };

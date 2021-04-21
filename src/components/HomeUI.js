@@ -1,10 +1,11 @@
 import React from 'react';
 import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid';
-import { Videocam, VideocamOff, Mic, MicOff } from "@material-ui/icons";
+import { Videocam, VideocamOff, Mic, MicOff } from '@material-ui/icons';
+import TextInputPopup from './popups/TextInputPopup';
 import { useStyles } from '../MuiTheme';
 
-const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggleVideo, initCall, localStream, foundLocal }) => {
+const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggleVideo, initCall, localStream, foundLocal, isOpen, setIsOpen }) => {
     const classes = useStyles();
 
     return(
@@ -22,15 +23,15 @@ const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggle
                             </Button>
                         </div>   
                     </Grid>
-                    <Grid item>
+                    <Grid item className={classes.awaitVideoControls}>
                         <Grid container direction="column" spacing={1} alignItems="center">
                             <Grid item>
-                                <span>Connections: {connections}</span>
+                                <Button onClick={()=>setIsOpen(true)}>Connections: {connections}</Button>
                             </Grid>
                             <Grid item>
                                 <Grid container spacing={1}>
                                     <Grid item>
-                                        <Button variant="contained" className={classes.roundButton} onClick={()=>setConnections(connections+1)} disabled={connections>=5}>
+                                        <Button variant="contained" className={classes.roundButton} onClick={()=>setConnections(connections+1)} disabled={connections>=100}>
                                             +
                                         </Button>
                                     </Grid>
@@ -50,7 +51,14 @@ const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggle
                     </Grid>
                 </Grid>
             </main>
-            <dialog open={connections==3}>test dialog</dialog>
+            <TextInputPopup
+                open={isOpen}
+                message="Peer 수 입력"
+                label="peer"
+                setText={setConnections}
+                value={connections}
+                submit={()=>setIsOpen(false)}
+            />
         </React.Fragment>
     )
 }

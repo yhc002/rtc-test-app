@@ -5,7 +5,18 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import Button from '@material-ui/core/Button'
 import Textfield from '@material-ui/core/Textfield';
 
-export default function TextfieldPopup({ open, message, label, setText, submit }) {
+export default function TextfieldPopup({ open, message, label, setText, value, submit }) {
+    const handleInput = (e) => {
+        let val = Number(e.target.value);
+        if(val>100) {
+            val=100;
+        }
+        if(val<1) {
+            val=1;
+        }
+        setText(val);
+    }
+
     return(
         <Dialog
             open={open}
@@ -14,7 +25,13 @@ export default function TextfieldPopup({ open, message, label, setText, submit }
                 <DialogContentText>
                     {message}
                 </DialogContentText>
-                <Textfield label={label} onChange={(e)=>setText(e.target.value)}/>
+                <Textfield
+                    label={label}
+                    type="number"
+                    onChange={handleInput}
+                    inputProps={{min:1,max:100}}
+                    value={value}
+                />
             </DialogContent>
             <DialogActions>
                 <Button onClick={submit} color="primary">

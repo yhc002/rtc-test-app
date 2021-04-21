@@ -1,34 +1,25 @@
 import React from 'react';
 import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid';
-import { Videocam, VideocamOff, Mic, MicOff, CallEnd, Layers } from "@material-ui/icons";
+import { Videocam, VideocamOff, Mic, MicOff, CallEnd, Layers, People } from "@material-ui/icons";
 import { useStyles } from '../MuiTheme';
 import StatsPopup from './popups/StatsPopup'; 
 
-const TestUI = ({ audio, video, toggleAudio, toggleVideo, view, toggleView, hangup, connections, localStreamRef, isConnected, statsIsOpen, openStats, closeStats, statMessages }) => {
+const TestUI = ({ audio, video, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, isConnected, statsIsOpen, openStats, closeStats, statMessages }) => {
     const classes = useStyles();
     
     return(
         <React.Fragment>
-            <video id="my-video" ref={localStreamRef} autoPlay={true}  />
+            <div id='my-area'>
+                <People />
+                <p> {connections}</p>
+                <video id="my-video" ref={localStreamRef} autoPlay={true}  />
+            </div>
             <main>
                 <div id="call-main">
                     <div id="call-videos">
                         {
-                            view == 'sidebar'?
-                            
-                            <div id="call-videos-sidebar">
-                                <div>
-                                    <video id="remote-video 0" autoPlay/>
-                                </div>
-                                <div id="sidebar">
-                                    {Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} onClick={()=>openStats(i)} autoPlay/>)}
-                                </div>
-                            </div>
-                            :
-                            <div id="call-videos-tiles">
-                                {Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} autoPlay/>)} 
-                            </div> 
+                            Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} onClick={()=>openStats(i)} autoPlay/>)
                         }
                     </div> 
                     <Grid container justify="space-between" alignItems="center">
