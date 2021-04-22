@@ -1,9 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { withRouter } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Test from '../components/TestUI'
+import { setSettings } from '../modules/rtc';
 
 const TestForm = ({ history }) => {
-    const connections = history.location.state.connections? history.location.state.connections : 1;
+    const { connections, audio, video } = useSelector(({ rtc }) => ({
+        connections: rtc.setting.connections,
+        audio: rtc.setting.audio,
+        video: rtc.setting.video,
+    }));
+    const dispatch = useDispatch();
 
     const localStream=useRef();
     const RTCObjects =useRef(Array.from({ length:connections },() => {return { pcLocal: null , pcRemote: null }}));
@@ -11,16 +18,13 @@ const TestForm = ({ history }) => {
     const remoteRefs = useRef(Array.from({ length:connections },() => null))
     const [isConnected, setIsConnected] = useState(false);
 
-    const [audio, setAudio] = useState(history.location? history.location.state.audio : true);
-    const [video, setVideo] = useState(history.location? history.location.state.video : true);
-
     const [view,setView] = useState('sidebar')
 
     const [statsIsOpen, setStatsIsOpen] = useState(false);
     const [statMessages, setStatMessages] = useState(['', '']);
 
     useEffect(() => {
-        console.log('init!')
+        console.log('init!', history)
         init();
     },[])
 
@@ -38,7 +42,7 @@ const TestForm = ({ history }) => {
         }
         for(let idx=0;idx<connections;idx++) {
             vid = document.getElementById(`remote-video ${idx}`);
-            
+            console.log("vid width", vid.getBoundingClientRect());
             if(view==="sidebar") {
                 vid.style.display="block";
                 vid.style.position="absolute";
@@ -47,10 +51,10 @@ const TestForm = ({ history }) => {
                     vid.style.width="80vw"; 
                     vid.style.height="100%";
                 } else {
-                    vid.style.left="80vw";
                     vid.style.height=`calc(${height}% - ${64/(connections-1)}px)`;
                     vid.style.top=`calc(64px + ${height*(idx-1)}% - ${64/(connections-1)*(idx-1)}px)`;
                     vid.style.width="20vw";
+                    vid.style.left="80vw";
                 }
             } else {
                 if(idx>49){
@@ -63,6 +67,7 @@ const TestForm = ({ history }) => {
                 vid.style.height=`${height}%`;
             }
             if(vid && !vid.srcObject) { vid.srcObject = remoteRefs.current[idx] }
+            
         }
     },[view])
 
@@ -171,12 +176,12 @@ const TestForm = ({ history }) => {
 
     const toggleAudio = () => {
         localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
-        setAudio(!audio);
+        dispatch(setSettings({ connections, video, audio: !audio }));
     }
 
     const toggleVideo = () => {
         localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
-        setVideo(!video);
+        dispatch(setSettings({ connections, audio, video: !video }));
     }
 
     const toggleView = () => {

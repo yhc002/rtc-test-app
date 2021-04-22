@@ -1,14 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withRouter } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Home from '../components/HomeUI'
+import { setSettings } from '../modules/rtc';
 
 
 const HomeForm = ({ history }) => {
+    const { connections, audio, video } = useSelector(({ rtc }) => ({
+        connections: rtc.setting.connections,
+        audio: rtc.setting.audio,
+        video: rtc.setting.video,
+    }));
+    const dispatch = useDispatch();
+
     const localStream=useRef();
     const [foundLocal, setFoundLocal] = useState(false);
-    const [connections, setConnections] = useState(1);
-    const [audio, setAudio] = useState(true);
-    const [video, setVideo] = useState(true);
     const [isOpen,setIsOpen] = useState(false);
 
     useEffect(()=>{getMedia()},[]);
@@ -19,6 +25,8 @@ const HomeForm = ({ history }) => {
                 localStream.current.srcObject = stream;
                 console.log("New LocalStream")
             });
+            localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
+            localStream.current.srcObject.getVideoTracks()[0].enabled = video;
             setFoundLocal(true);
         } catch (e) {
             console.log("getUserMedia error",e)
@@ -27,18 +35,17 @@ const HomeForm = ({ history }) => {
     }
 
     const initCall = () => {
-        console.log("audio & video",audio,video)
-        history.push('./test', { connections, audio, video })
+        history.push('./test')
     }
 
     const toggleAudio = () => {
         localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
-        setAudio(!audio);
+        dispatch(setSettings({ connections, video, audio: !audio }));
     }
 
     const toggleVideo = () => {
         localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
-        setVideo(!video);
+        dispatch(setSettings({ connections, audio, video: !video }));
     }
 
     return (
@@ -49,7 +56,7 @@ const HomeForm = ({ history }) => {
             toggleVideo={toggleVideo}
             initCall={initCall}
             connections={connections}
-            setConnections={setConnections}
+            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video }))}
             localStream={localStream}
             foundLocal={foundLocal}
             history={history} 
