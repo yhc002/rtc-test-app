@@ -35,7 +35,7 @@ const HomeForm = ({ history }) => {
     }
 
     const initCall = () => {
-        history.push('./test')
+        history.push('./test');
     }
 
     const toggleAudio = () => {

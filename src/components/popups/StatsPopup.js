@@ -17,7 +17,6 @@ export default function StatsPopup({ open, messages, confirm }) {
                     <Grid item>
                         Local
                         {messages[0]}
-                        
                     </Grid>
                     <Grid item>
                         <Divider orientation="vertical" />

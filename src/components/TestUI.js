@@ -5,7 +5,7 @@ import { Videocam, VideocamOff, Mic, MicOff, CallEnd, Layers, People } from "@ma
 import { useStyles } from '../MuiTheme';
 import StatsPopup from './popups/StatsPopup'; 
 
-const TestUI = ({ audio, video, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, isConnected, statsIsOpen, openStats, closeStats, statMessages }) => {
+const TestUI = ({ audio, video, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, statsIsOpen, openStats, closeStats, statMessages }) => {
     const classes = useStyles();
     
     return(
@@ -37,7 +37,7 @@ const TestUI = ({ audio, video, toggleAudio, toggleVideo, toggleView, hangup, co
                                     </Button>
                                 </Grid>
                                 <Grid item>
-                                    <Button variant="contained" className={classes.roundButton} onClick={hangup} disabled={!isConnected}>
+                                    <Button variant="contained" className={classes.roundButton} onClick={hangup}>
                                         <CallEnd />
                                     </Button>
                                 </Grid>

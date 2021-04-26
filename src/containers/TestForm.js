@@ -16,17 +16,17 @@ const TestForm = ({ history }) => {
     const RTCObjects =useRef(Array.from({ length:connections },() => {return { pcLocal: null , pcRemote: null }}));
 
     const remoteRefs = useRef(Array.from({ length:connections },() => null))
-    const [isConnected, setIsConnected] = useState(false);
 
     const [view,setView] = useState('sidebar')
 
     const [statsIsOpen, setStatsIsOpen] = useState(false);
     const [statMessages, setStatMessages] = useState(['', '']);
+    const [statInterval, setStatInterval] = useState(null);
 
     useEffect(() => {
         console.log('init!', history)
         init();
-    },[])
+    },[]);
 
     useEffect(() => {
         let vid;
@@ -100,7 +100,6 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcLocal
                 .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
                 .then((event)=>gotDescriptionLocal(event,i), onCreateSessionDescriptionError);
-            setIsConnected(true)
         }
     }
 
@@ -158,7 +157,7 @@ const TestForm = ({ history }) => {
         console.log(`Failed to add ICE candidate: ${error.toString()}`);
     }
 
-    function hangup(isLeave) {
+    function hangup() {
         console.log('Ending calls');
         
         for(let i=0;i<connections;i++) {
@@ -169,9 +168,8 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcLocal = null;
             RTCObjects.current[i].pcRemote = null;
         }
-        setIsConnected(false)
-        if(isLeave)
-            history.push('/');
+
+        history.push('/')
     }
 
     const toggleAudio = () => {
@@ -192,23 +190,32 @@ const TestForm = ({ history }) => {
         }
     }
 
-    const openStats = async (idx) => {
-        let messages=['',''];
+    const openStats = (idx) => {
         console.log('stats re',idx)
-        if(RTCObjects.current[idx] && RTCObjects.current[idx].pcLocal){
-            const localStat = await RTCObjects.current[idx].pcLocal.getStats(null).then(
-                showRemoteStats, err => err.toString()
-            )
-            messages[0] = localStat;
-        }
-        if(RTCObjects.current[idx] && RTCObjects.current[idx].pcRemote){
-            const remoteStat = await RTCObjects.current[idx].pcRemote.getStats(null).then(
-                showLocalStats, err => err.toString()
-            )
-            messages[1] = remoteStat;
-        }
-        setStatMessages(messages);
+        const interval = setInterval(async ()=>{
+            let messages=['',''];
+            if(RTCObjects.current[idx] && RTCObjects.current[idx].pcLocal){
+                const localStat = await RTCObjects.current[idx].pcLocal.getStats(null).then(
+                    showRemoteStats, err => err.toString()
+                )
+                messages[0] = localStat;
+            }
+            if(RTCObjects.current[idx] && RTCObjects.current[idx].pcRemote){
+                const remoteStat = await RTCObjects.current[idx].pcRemote.getStats(null).then(
+                    showLocalStats, err => err.toString()
+                )
+                messages[1] = remoteStat;
+            }
+            setStatMessages(messages);
+        },1000);
+        setStatInterval(interval);
         setStatsIsOpen(true);
+    }
+
+    const closeStats = () => {
+        clearInterval(statInterval);
+        setStatsIsOpen(false);
+        setStatInterval(null);
     }
 
     const showRemoteStats = (results) => {
@@ -249,14 +256,13 @@ const TestForm = ({ history }) => {
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
             toggleView={toggleView}
-            hangup={()=>hangup(true)}
+            hangup={()=>hangup('/')}
             connections={connections}
             localStreamRef={localStream}
             remoteStreamRefs={remoteRefs}
-            isConnected={isConnected}
             statsIsOpen={statsIsOpen}
             openStats={(idx)=>openStats(idx)}
-            closeStats={()=>setStatsIsOpen(false)}
+            closeStats={closeStats}
             statMessages={statMessages}
         />
     );

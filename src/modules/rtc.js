@@ -7,7 +7,7 @@ const initialState = {
         connections: 1,
         audio: true,
         video: true,
-    }
+    },
 }
 
 export const setSettings = createAction(SET_SETTINGS, settings => settings);
@@ -19,7 +19,7 @@ const rtc = handleActions(
             setting,
         }),
     },
-    initialState
+    initialState,
 );
 
 export default rtc;

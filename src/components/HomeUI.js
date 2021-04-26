@@ -23,7 +23,7 @@ const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggle
                             </Button>
                         </div>   
                     </Grid>
-                    <Grid item className={classes.awaitVideoControls}>
+                    <Grid item className={classes.awaitControls}>
                         <Grid container direction="column" spacing={1} alignItems="center">
                             <Grid item>
                                 <Button onClick={()=>setIsOpen(true)}>Connections: {connections}</Button>

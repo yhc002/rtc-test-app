@@ -2,14 +2,6 @@
   text-align: center;
 }
 
-.divider{
-  position:absolute;
-  left:50%;
-  top:10%;
-  bottom:10%;
-  border-left:1px solid white;
-}
-
 button {
   padding: 10px 10px;
 }
@@ -21,18 +13,6 @@ div#await-main {
   align-items: center;
   width: 100%;
   height: 98vh;
-}
-
-div#await-video-container {
-  position: relative;
-  background:#222;
-  top: 0;
-  left: 0;
-  max-width: 740px;
-  max-height: 416px;
-  width: 100%;
-  height: 100%;
-
 }
 
 video#await-video {
@@ -51,16 +31,6 @@ div#await-video-controls {
   z-index: 10;
   width: 100%;
   justify-content: center;
-}
-
-div#await-controls {
-  display: flex;
-  margin-left: 10px;
-  max-height: 150px;
-  height: 100%;
-  justify-content: space-around;
-  flex-direction: column;
-  align-items: center;
 }
 
 div#call-main {
@@ -99,56 +69,4 @@ video#my-video {
   top: 0;
   right: 0;
   height: 64px;
-}
-
-video#remote-video {
-  width: 100%;
-}
-
-div#call-videos-sidebar {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-div#sidebar {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  width: 15vw;
-}
-
-#focus-video {
-  max-width: 80vw;
-  max-height: 88vh;
-  width: 1366px;
-}
-
-#sidebar-video {
-  position: relative;
-  top: 0;
-  right: 0;
-  max-width: 219px;
-  width: 100%;
-}
-
-div#call-videos-tiles {
-  display: flex;
-  flex-flow: wrap;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
-
-#tile-video {
-  max-width: 768px;
-  width: 100%;
-}
-
-div#call-controls {
-  display: flex;
-  width: 99%;
-  height: 8vh;
-  justify-content: space-between;
-  align-items: center;
 }

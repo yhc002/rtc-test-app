@@ -23,7 +23,7 @@ export const useStyles = makeStyles(() => ({
         width: "100%",
         height: "100%",
     },
-    awaitVideoControls: {
+    awaitControls: {
       width:"30vw"
     },
     roundButton: {
