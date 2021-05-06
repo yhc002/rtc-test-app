@@ -20,8 +20,9 @@ const TestForm = ({ history }) => {
     const [view,setView] = useState('sidebar')
 
     const [statsIsOpen, setStatsIsOpen] = useState(false);
-    const [statMessages, setStatMessages] = useState(['', '']);
+    const [statMessages, setStatMessages] = useState([[],[]]);
     const [statInterval, setStatInterval] = useState(null);
+    const [isSender, setIsSender] = useState("sender");
 
     useEffect(() => {
         console.log('init!', history)
@@ -183,7 +184,7 @@ const TestForm = ({ history }) => {
     }
 
     const toggleView = () => {
-        if(view=="sidebar"){
+        if(view === "sidebar"){
             setView("tiles")
         } else {
             setView("sidebar")
@@ -191,18 +192,20 @@ const TestForm = ({ history }) => {
     }
 
     const openStats = (idx) => {
-        console.log('stats re',idx)
+        if(statInterval) {
+            clearInterval(statInterval);
+        }
         const interval = setInterval(async ()=>{
             let messages=['',''];
             if(RTCObjects.current[idx] && RTCObjects.current[idx].pcLocal){
                 const localStat = await RTCObjects.current[idx].pcLocal.getStats(null).then(
-                    showLocalStats, err => err.toString()
+                    results=>results, err => err.toString()
                 )
                 messages[0] = localStat;
             }
             if(RTCObjects.current[idx] && RTCObjects.current[idx].pcRemote){
                 const remoteStat = await RTCObjects.current[idx].pcRemote.getStats(null).then(
-                    showRemoteStats, err => err.toString()
+                    results=>results, err => err.toString()
                 )
                 messages[1] = remoteStat;
             }
@@ -216,41 +219,6 @@ const TestForm = ({ history }) => {
         clearInterval(statInterval);
         setStatsIsOpen(false);
         setStatInterval(null);
-    }
-
-    const showLocalStats = (results) => {
-        let stats=[]
-        results.forEach(report => {
-            if(report.id.indexOf('sender')>0){
-                let key;
-                for(key in report){
-                    stats.push(<p>{key} : {report[key].toString()}</p>);
-                }
-            }
-        });
-        return stats;
-    }
-    const showRemoteStats = (results) => {
-        let stats=[]
-        results.forEach(report => {
-            if(report.id.indexOf('receiver')>0){
-                console.log("lr receiver",report)
-                let key;
-                for(key in report){
-                    stats.push(<p>{key} : {report[key].toString()}</p>);       
-                }
-                stats.push(<br/>);
-            }
-            if(report.id.indexOf('Stream')>0){
-                console.log("lr stream",report)
-                let key;
-                for(key in report){
-                    stats.push(<p>{key} : {report[key].toString()}</p>);
-                }
-                stats.push(<br/>);
-            }
-        });
-        return stats;
     }
 
     return(
@@ -268,6 +236,8 @@ const TestForm = ({ history }) => {
             openStats={(idx)=>openStats(idx)}
             closeStats={closeStats}
             statMessages={statMessages}
+            isSender={isSender}
+            setIsSender={setIsSender}
         />
     );
 }

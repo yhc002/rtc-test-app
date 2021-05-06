@@ -5,7 +5,9 @@ import { Videocam, VideocamOff, Mic, MicOff, CallEnd, Layers, People } from "@ma
 import { useStyles } from '../MuiTheme';
 import StatsPopup from './popups/StatsPopup'; 
 
-const TestUI = ({ audio, video, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, statsIsOpen, openStats, closeStats, statMessages }) => {
+const TestUI = ({
+    audio, video, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, statsIsOpen, openStats, closeStats, statMessages, isSender, setIsSender,
+}) => {
     const classes = useStyles();
     
     return(
@@ -55,6 +57,8 @@ const TestUI = ({ audio, video, toggleAudio, toggleVideo, toggleView, hangup, co
                 open={statsIsOpen}
                 messages={statMessages}
                 confirm={closeStats}
+                isSender={isSender}
+                setIsSender={setIsSender}
             />
         </React.Fragment>
     )

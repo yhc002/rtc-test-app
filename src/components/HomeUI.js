@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '@material-ui/core/Button'
+import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import { Videocam, VideocamOff, Mic, MicOff } from '@material-ui/icons';
 import TextInputPopup from './popups/TextInputPopup';
