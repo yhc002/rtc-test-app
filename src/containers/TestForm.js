@@ -35,7 +35,7 @@ const TestForm = ({ history }) => {
         let width;
         let n;
         if(view==="sidebar"){
-            height=100/connections;
+            height=100/Math.min(connections-1,5);
         } else {
             n = Math.ceil(Math.sqrt(Math.min(connections,49)))
             width=100/n;
@@ -51,13 +51,17 @@ const TestForm = ({ history }) => {
                     vid.style.left=0;
                     vid.style.width="80vw"; 
                     vid.style.height="100%";
+                } 
+                else if(idx>5){
+                    vid.style.display="none";
                 } else {
-                    vid.style.height=`calc(${height}% - ${64/(connections-1)}px)`;
-                    vid.style.top=`calc(64px + ${height*(idx-1)}% - ${64/(connections-1)*(idx-1)}px)`;
+                    vid.style.height=`calc(${height}% - ${64/Math.min(connections-1,5)}px)`;
+                    vid.style.top=`calc(64px + ${height*(idx-1)}% - ${64/Math.min(connections-1,5)*(idx-1)}px)`;
                     vid.style.width="20vw";
                     vid.style.left="80vw";
                 }
             } else {
+                vid.style.display="block";
                 if(idx>49){
                     vid.style.display="none";
                 }
