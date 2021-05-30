@@ -13,9 +13,9 @@ const TestForm = ({ history }) => {
     const dispatch = useDispatch();
 
     const localStream=useRef();
-    const RTCObjects =useRef(Array.from({ length:connections },() => {return { pcLocal: null , pcRemote: null }}));
+    const RTCObjects =useRef(Array.from({ length: 100 },() => {return { pcLocal: null , pcRemote: null }}));
 
-    const remoteRefs = useRef(Array.from({ length:connections },() => null))
+    const remoteRefs = useRef(Array.from({ length: 100 },() => null))
 
     const [view,setView] = useState('sidebar')
 
@@ -26,8 +26,10 @@ const TestForm = ({ history }) => {
 
     useEffect(() => {
         console.log('init!', history)
+        hangup(false);
         init();
-    },[]);
+    },[connections]);
+
 
     useEffect(() => {
         let vid;
@@ -74,7 +76,7 @@ const TestForm = ({ history }) => {
             if(vid && !vid.srcObject) { vid.srcObject = remoteRefs.current[idx] }
             
         }
-    },[view])
+    },[view, connections])
 
 
     const init = async () => {
@@ -162,7 +164,7 @@ const TestForm = ({ history }) => {
         console.log(`Failed to add ICE candidate: ${error.toString()}`);
     }
 
-    function hangup() {
+    function hangup(shouldLeave) {
         console.log('Ending calls');
         
         for(let i=0;i<connections;i++) {
@@ -174,7 +176,9 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcRemote = null;
         }
 
-        history.push('/')
+        if(shouldLeave) {
+            history.push('/')
+        } 
     }
 
     const toggleAudio = () => {
@@ -229,10 +233,11 @@ const TestForm = ({ history }) => {
         <Test
             audio={audio}
             video={video}
+            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video }))}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
             toggleView={toggleView}
-            hangup={()=>hangup('/')}
+            hangup={()=>hangup(true)}
             connections={connections}
             localStreamRef={localStream}
             remoteStreamRefs={remoteRefs}

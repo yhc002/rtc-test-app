@@ -6,7 +6,7 @@ import { useStyles } from '../MuiTheme';
 import StatsPopup from './popups/StatsPopup'; 
 
 const TestUI = ({
-    audio, video, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, statsIsOpen, openStats, closeStats, statMessages, isSender, setIsSender,
+    audio, video, setConnections, toggleAudio, toggleVideo, toggleView, hangup, connections, localStreamRef, statsIsOpen, openStats, closeStats, statMessages, isSender, setIsSender,
 }) => {
     const classes = useStyles();
     
@@ -14,6 +14,8 @@ const TestUI = ({
         <React.Fragment>
             <div id='my-area'>
                 <People />
+                <Button onClick={()=>setConnections(connections+1)}>+</Button>
+                <Button onClick={()=>setConnections(connections-1)}>-</Button>
                 <p> {connections}</p>
                 <video id="my-video" ref={localStreamRef} autoPlay={true}  />
             </div>

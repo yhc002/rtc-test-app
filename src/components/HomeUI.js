@@ -5,15 +5,22 @@ import { Videocam, VideocamOff, Mic, MicOff } from '@material-ui/icons';
 import TextInputPopup from './popups/TextInputPopup';
 import { useStyles } from '../MuiTheme';
 
-const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggleVideo, initCall, localStream, foundLocal, isOpen, setIsOpen }) => {
+const HomeUI = ({
+    connections, setConnections, setResolution, audio, video, toggleAudio, toggleVideo, initCall, localStream, foundLocal, isOpen, setIsOpen 
+}) => {
     const classes = useStyles();
 
     return(
         <React.Fragment>
             <main>
                 <Grid container id="await-main" spacing={10}>
-                    <Grid item className={classes.awaitVideoContainer}>
+                    <Grid item className={classes.awaitVideoContainer}>  
                         <video id="await-video" ref={localStream} autoPlay/>
+                        <div id="await-resoultion-controls">
+                            <Button variant="contained" onClick={()=>setResolution(0)}>qvga</Button>
+                            <Button variant="contained" onClick={()=>setResolution(1)}>vga</Button>
+                            <Button variant="contained" onClick={()=>setResolution(2)}>hd</Button>
+                        </div> 
                         <div id='await-video-controls'>
                             <Button variant="contained" className={classes.roundButton} onClick={toggleAudio}>
                                 { audio ? <Mic /> : <MicOff /> }
@@ -21,7 +28,7 @@ const HomeUI = ({ connections, setConnections, audio, video, toggleAudio, toggle
                             <Button variant="contained" className={classes.roundButton} onClick={toggleVideo}>
                                 { video? <Videocam /> : <VideocamOff /> }
                             </Button>
-                        </div>   
+                        </div>
                     </Grid>
                     <Grid item className={classes.awaitControls}>
                         <Grid container direction="column" spacing={1} alignItems="center">

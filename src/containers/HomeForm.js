@@ -3,7 +3,7 @@ import { withRouter } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Home from '../components/HomeUI'
 import { setSettings } from '../modules/rtc';
-
+import {videoConstraints } from '../lib/constraints';
 
 const HomeForm = ({ history }) => {
     const { connections, audio, video } = useSelector(({ rtc }) => ({
@@ -17,22 +17,30 @@ const HomeForm = ({ history }) => {
     const [foundLocal, setFoundLocal] = useState(false);
     const [isOpen,setIsOpen] = useState(false);
 
-    useEffect(()=>{getMedia()},[]);
+    useEffect(()=>{getMedia(video)},[]);
 
-    const getMedia = async () => {
+    const getMedia = async (vid) => {
         try {
-            await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
+            if(localStream.current.srcObject) {
+                console.log("stop track")
+                localStream.current.srcObject.getTracks().forEach(track => {
+                    track.stop();
+                });
+            }
+            await navigator.mediaDevices.getUserMedia({ audio, video: vid }).then(stream => {
                 localStream.current.srcObject = stream;
-                console.log("New LocalStream")
+                const track = stream.getVideoTracks()[0]
+                track.applyConstraints({video: vid});
             });
-            localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
-            localStream.current.srcObject.getVideoTracks()[0].enabled = video;
+            localStream.current.srcObject.getAudioTracks()[0].enabled = true;
+            localStream.current.srcObject.getVideoTracks()[0].enabled = true;
             setFoundLocal(true);
         } catch (e) {
             console.log("getUserMedia error",e)
             setFoundLocal(false);
         }
     }
+
 
     const initCall = () => {
         history.push('./test');
@@ -48,6 +56,11 @@ const HomeForm = ({ history }) => {
         dispatch(setSettings({ connections, audio, video: !video }));
     }
 
+    const setResolution = (idx) => {
+        dispatch(setSettings({ connections, audio, video: videoConstraints[idx] }));
+        getMedia(videoConstraints[idx]);
+    }
+
     return (
         <Home
             audio={audio}
@@ -57,6 +70,7 @@ const HomeForm = ({ history }) => {
             initCall={initCall}
             connections={connections}
             setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video }))}
+            setResolution={setResolution}
             localStream={localStream}
             foundLocal={foundLocal}
             history={history} 

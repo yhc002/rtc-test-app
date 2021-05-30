@@ -6,7 +6,7 @@ const initialState = {
     setting: {
         connections: 1,
         audio: true,
-        video: true,
+        video: {width: {exact: 320}, height: {exact: 240}}
     },
 }
 
