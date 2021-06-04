@@ -1,13 +1,13 @@
-import { HashRouter, Route} from 'react-router-dom'
+import { BrowserRouter, Route} from 'react-router-dom'
 import { Home, Test } from './pages';
 import './App.css';
 
 function App() {
   return (
-    <HashRouter basename="/" hashType="noslash">
+    <BrowserRouter basename={process.env.PUBLIC_URL} hashType="noslash">
       <Route exact path="/" component={Home}/>
       <Route exact path="/test" component={Test}/>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 
