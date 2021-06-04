@@ -6,10 +6,11 @@ import { setSettings } from '../modules/rtc';
 import {videoConstraints } from '../lib/constraints';
 
 const HomeForm = ({ history }) => {
-    const { connections, audio, video } = useSelector(({ rtc }) => ({
+    const { connections, audio, video, resolution } = useSelector(({ rtc }) => ({
         connections: rtc.setting.connections,
         audio: rtc.setting.audio,
         video: rtc.setting.video,
+        resolution: rtc.setting.resolution,
     }));
     const dispatch = useDispatch();
 
@@ -17,9 +18,9 @@ const HomeForm = ({ history }) => {
     const [foundLocal, setFoundLocal] = useState(false);
     const [isOpen,setIsOpen] = useState(false);
 
-    useEffect(()=>{getMedia(video)},[]);
+    useEffect(()=>{getMedia(resolution)},[]);
 
-    const getMedia = async (vid) => {
+    const getMedia = async (res) => {
         try {
             if(localStream.current.srcObject) {
                 console.log("stop track")
@@ -27,13 +28,15 @@ const HomeForm = ({ history }) => {
                     track.stop();
                 });
             }
-            await navigator.mediaDevices.getUserMedia({ audio, video: vid }).then(stream => {
+
+            await navigator.mediaDevices.getUserMedia({ audio: true, video: res }).then(stream => {
                 localStream.current.srcObject = stream;
                 const track = stream.getVideoTracks()[0]
-                track.applyConstraints({video: vid});
+                const settings = track.getSettings();
+                const controls = document.getElementById('await-video-container');
+                controls.style.width = `${settings.width}px`;
+                controls.style.height = `${settings.height}px`;
             });
-            localStream.current.srcObject.getAudioTracks()[0].enabled = true;
-            localStream.current.srcObject.getVideoTracks()[0].enabled = true;
             setFoundLocal(true);
         } catch (e) {
             console.log("getUserMedia error",e)
@@ -43,21 +46,28 @@ const HomeForm = ({ history }) => {
 
 
     const initCall = () => {
+        if(localStream.current.srcObject) {
+            console.log("stop track")
+            localStream.current.srcObject.getTracks().forEach(track => {
+                track.stop();
+            });
+            localStream.current=null;
+        }
         history.push('./test');
     }
 
     const toggleAudio = () => {
         localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
-        dispatch(setSettings({ connections, video, audio: !audio }));
+        dispatch(setSettings({ connections, video, audio: !audio, resolution }));
     }
 
     const toggleVideo = () => {
         localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
-        dispatch(setSettings({ connections, audio, video: !video }));
+        dispatch(setSettings({ connections, audio, video: !video, resolution }));
     }
 
     const setResolution = (idx) => {
-        dispatch(setSettings({ connections, audio, video: videoConstraints[idx] }));
+        dispatch(setSettings({ connections, audio: true, video: true, resolution: videoConstraints[idx] }));
         getMedia(videoConstraints[idx]);
     }
 
@@ -69,7 +79,7 @@ const HomeForm = ({ history }) => {
             toggleVideo={toggleVideo}
             initCall={initCall}
             connections={connections}
-            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video }))}
+            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video, resolution }))}
             setResolution={setResolution}
             localStream={localStream}
             foundLocal={foundLocal}

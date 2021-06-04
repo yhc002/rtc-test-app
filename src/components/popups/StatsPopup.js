@@ -19,7 +19,7 @@ export default function StatsPopup({ open, messages, confirm, isSender, setIsSen
         }
         tableData[report.id] = datas;
     });
-    console.log(tableData,ids)
+
     return(
         <Dialog
             open={open}

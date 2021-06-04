@@ -15,20 +15,14 @@ div#await-main {
   height: 98vh;
 }
 
+div#await-video-container {
+  position: relative;
+}
+
 video#await-video {
   position: absolute;
   top: 0;
   left: 0;
-}
-
-div#await-resoution-controls {
-  position: absolute;
-  display: flex;
-  top: 0;
-  left: 0;
-  z-index: 10;
-  width: 100%;
-  justify-content: center;
 }
 
 div#await-video-controls {
@@ -40,6 +34,18 @@ div#await-video-controls {
   width: 100%;
   justify-content: center;
 }
+
+div#await-resoution-controls {
+  position: absolute;
+  display: flex;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  justify-content: center;
+}
+
+
 
 div#call-main {
   display: flex;
@@ -54,11 +60,16 @@ div#call-videos {
   position: relative;
   display: flex;
   flex-wrap: wrap;
+  overflow: hidden;
   justify-content: center;
   align-items: center;
   background:#222;
   width: 100%;
   height:90vh;
+}
+
+.remote-container {
+  overflow: hidden;
 }
 
 div#my-area {

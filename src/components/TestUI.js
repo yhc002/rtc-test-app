@@ -23,7 +23,11 @@ const TestUI = ({
                 <div id="call-main">
                     <div id="call-videos">
                         {
-                            Array.from({ length:connections },(_,i) => <video id={`remote-video ${i}`} onClick={()=>openStats(i)} autoPlay/>)
+                            Array.from({ length:connections },(_,i) => 
+                                <div key={i} className="remote-container" id={`remote-container ${i}`}>
+                                    <video className="remote-video" id={`remote-video ${i}`} onClick={()=>openStats(i)} autoPlay/>
+                                </div>
+                            )
                         }
                     </div> 
                     <Grid container justify="space-between" alignItems="center">

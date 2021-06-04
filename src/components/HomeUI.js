@@ -14,24 +14,32 @@ const HomeUI = ({
         <React.Fragment>
             <main>
                 <Grid container id="await-main" spacing={10}>
-                    <Grid item className={classes.awaitVideoContainer}>  
-                        <video id="await-video" ref={localStream} autoPlay/>
-                        <div id="await-resoultion-controls">
-                            <Button variant="contained" onClick={()=>setResolution(0)}>qvga</Button>
-                            <Button variant="contained" onClick={()=>setResolution(1)}>vga</Button>
-                            <Button variant="contained" onClick={()=>setResolution(2)}>hd</Button>
-                        </div> 
-                        <div id='await-video-controls'>
-                            <Button variant="contained" className={classes.roundButton} onClick={toggleAudio}>
-                                { audio ? <Mic /> : <MicOff /> }
-                            </Button>
-                            <Button variant="contained" className={classes.roundButton} onClick={toggleVideo}>
-                                { video? <Videocam /> : <VideocamOff /> }
-                            </Button>
+                    <Grid item>
+                        <div id="await-video-container">
+                            <video id="await-video" ref={localStream} autoPlay/>
+                            <div id='await-video-controls'>
+                                <Button variant="contained" className={classes.roundButton} onClick={toggleAudio}>
+                                    { audio ? <Mic /> : <MicOff /> }
+                                </Button>
+                                <Button variant="contained" className={classes.roundButton} onClick={toggleVideo}>
+                                    { video? <Videocam /> : <VideocamOff /> }
+                                </Button>
+                            </div>
                         </div>
                     </Grid>
                     <Grid item className={classes.awaitControls}>
                         <Grid container direction="column" spacing={1} alignItems="center">
+                            <Grid item>
+                                <div id="await-resoultion-controls">
+                                    <Button variant="contained" onClick={()=>setResolution(0)}>qvga</Button>
+                                    <Button variant="contained" onClick={()=>setResolution(1)}>vga</Button>
+                                    <Button variant="contained" onClick={()=>setResolution(2)}>HD</Button>
+                                    <Button variant="contained" onClick={()=>setResolution(3)}>fullHD</Button>
+                                    <Button variant="contained" onClick={()=>setResolution(4)}>TV4k</Button>
+                                    <Button variant="contained" onClick={()=>setResolution(5)}>cinema4K</Button>
+                                    <Button variant="contained" onClick={()=>setResolution(5)}>8K</Button>
+                                </div> 
+                            </Grid>
                             <Grid item>
                                 <Button onClick={()=>setIsOpen(true)}>Connections: {connections}</Button>
                             </Grid>

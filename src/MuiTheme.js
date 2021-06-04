@@ -16,16 +16,6 @@ const themePalete = createMuiTheme({
 })
 
 export const useStyles = makeStyles(() => ({
-    awaitVideoContainer: {
-        position: "relative",
-        maxWidth: "740px",
-        maxHeight: "416px",
-        width: "100%",
-        height: "100%",
-    },
-    awaitControls: {
-      width:"30vw"
-    },
     roundButton: {
         borderRadius: "50%",
         width: "60px",

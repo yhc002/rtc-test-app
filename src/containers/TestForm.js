@@ -5,10 +5,11 @@ import Test from '../components/TestUI'
 import { setSettings } from '../modules/rtc';
 
 const TestForm = ({ history }) => {
-    const { connections, audio, video } = useSelector(({ rtc }) => ({
+    const { connections, audio, video, resolution } = useSelector(({ rtc }) => ({
         connections: rtc.setting.connections,
         audio: rtc.setting.audio,
         video: rtc.setting.video,
+        resolution: rtc.setting.resolution,
     }));
     const dispatch = useDispatch();
 
@@ -17,6 +18,8 @@ const TestForm = ({ history }) => {
 
     const remoteRefs = useRef(Array.from({ length: 100 },() => null))
 
+    const [areaWidth, setAreaWidth] = useState(0);
+    const [areaHeight, setAreaHeight] = useState(0);
     const [view,setView] = useState('sidebar')
 
     const [statsIsOpen, setStatsIsOpen] = useState(false);
@@ -25,65 +28,79 @@ const TestForm = ({ history }) => {
     const [isSender, setIsSender] = useState("sender");
 
     useEffect(() => {
-        console.log('init!', history)
+        resizeWindow();
+        window.addEventListener('resize', resizeWindow);
+        return () => { // cleanup 
+          window.removeEventListener('resize', resizeWindow);
+        }
+      }, []);
+
+    useEffect(() => {
         hangup(false);
         init();
+        resizeVideos();
     },[connections]);
 
 
     useEffect(() => {
+        resizeVideos();
+    },[view, areaHeight, areaWidth])
+
+    const resizeWindow = () => {
+        const area = document.getElementById('call-videos');
+        setAreaWidth(area.offsetWidth);
+        setAreaHeight(area.offsetHeight);
+    }
+
+    const resizeVideos = () => {
         let vid;
-        let height; 
-        let width;
-        let n;
-        if(view==="sidebar"){
-            height=100/Math.min(connections-1,5);
-        } else {
-            n = Math.ceil(Math.sqrt(Math.min(connections,49)))
-            width=100/n;
-            height=100/n;
-        }
+        let vidContainer;
         for(let idx=0;idx<connections;idx++) {
             vid = document.getElementById(`remote-video ${idx}`);
-            console.log("vid width", vid.getBoundingClientRect());
+            vidContainer = document.getElementById(`remote-container ${idx}`)
+            if(areaWidth>areaHeight) {
+                vid.style.width="100%";
+                vid.style.height="auto";
+            } else {
+                vid.style.width="auto";
+                vid.style.height="100%";
+            }
             if(view==="sidebar") {
-                vid.style.display="block";
-                vid.style.position="absolute";
+                vidContainer.style.display="block";
+                vidContainer.style.position="absolute";
                 if(idx===0){
-                    vid.style.left=0;
-                    vid.style.width="80vw"; 
-                    vid.style.height="100%";
-                } 
-                else if(idx>5){
-                    vid.style.display="none";
+                    vidContainer.style.left=0;
+                    vidContainer.style.width=`${areaWidth-220}px`; 
+                    vidContainer.style.height="100%";
+                } else if(idx>5){
+                    vidContainer.style.display="none";
                 } else {
-                    vid.style.height=`calc(${height}% - ${64/Math.min(connections-1,5)}px)`;
-                    vid.style.top=`calc(64px + ${height*(idx-1)}% - ${64/Math.min(connections-1,5)*(idx-1)}px)`;
-                    vid.style.width="20vw";
-                    vid.style.left="80vw";
+                    vidContainer.style.right=0;
+                    vidContainer.style.width="218px";
+                    vidContainer.style.height="123px";
+                    vidContainer.style.top=`${123*Math.min(idx-1,6)+64}px`
                 }
             } else {
-                vid.style.display="block";
+                vidContainer.style.display="block";
+                vidContainer.style.top="auto";
+                vidContainer.style.left="auto";
+                vidContainer.style.right="auto";
                 if(idx>49){
-                    vid.style.display="none";
+                    vidContainer.style.display="none";
                 }
-                vid.style.position="relative";
-                vid.style.left=0;
-                vid.style.top=0;
-                vid.style.width=`${width}%`;
-                vid.style.height=`${height}%`;
+                vidContainer.style.position="relative";
+                vidContainer.style.width=`${areaWidth/Math.ceil(Math.sqrt(Math.min(connections,49)))}px`;
+                vidContainer.style.height=`${areaHeight/Math.ceil(Math.sqrt(Math.min(connections,49)))}px`
             }
-            if(vid && !vid.srcObject) { vid.srcObject = remoteRefs.current[idx] }
-            
         }
-    },[view, connections])
-
+    }
 
     const init = async () => {
         try {
-            await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
+            await navigator.mediaDevices.getUserMedia({ audio: audio || true, video: video ? resolution : true }).then(stream => {
                 localStream.current.srcObject = stream;
-                console.log("New LocalStream")
+                const track = stream.getVideoTracks()[0]
+                const settings = track.getSettings();
             });
             localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
             localStream.current.srcObject.getVideoTracks()[0].enabled = video;
@@ -116,7 +133,7 @@ const TestForm = ({ history }) => {
     
     function gotDescriptionLocal(desc, idx) {
         RTCObjects.current[idx].pcLocal.setLocalDescription(desc);
-        console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
+        // console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
         RTCObjects.current[idx].pcRemote.setRemoteDescription(desc);
         // Since the 'remote' side has no media stream we need
         // to pass in the right constraints in order for it to
@@ -126,7 +143,7 @@ const TestForm = ({ history }) => {
       
     function gotDescriptionRemote(desc, idx) {
         RTCObjects.current[idx].pcRemote.setLocalDescription(desc);
-        console.log(`Answer from pc${idx}Remote\n${desc.sdp}`);
+        // console.log(`Answer from pc${idx}Remote\n${desc.sdp}`);
         RTCObjects.current[idx].pcLocal.setRemoteDescription(desc);
     }
 
@@ -142,7 +159,6 @@ const TestForm = ({ history }) => {
     }
 
     function iceCallbackLocal(event, idx) {
-        console.log("iceCallback",event, idx)
         handleCandidate(event.candidate, RTCObjects.current[idx].pcRemote, `pc${idx}: `, 'local');
     }
       
@@ -152,21 +168,19 @@ const TestForm = ({ history }) => {
       
     function handleCandidate(candidate, dest, prefix, type) {
         dest.addIceCandidate(candidate)
-            .then(onAddIceCandidateSuccess, onAddIceCandidateError);
-        console.log(`${prefix}New ${type} ICE candidate: ${candidate ? candidate.candidate : '(null)'}`);
+            // .then(onAddIceCandidateSuccess, onAddIceCandidateError);
+        //console.log(`${prefix}New ${type} ICE candidate: ${candidate ? candidate.candidate : '(null)'}`);
     }
       
-    function onAddIceCandidateSuccess() {
-        console.log('AddIceCandidate success.');
-    }
+    // function onAddIceCandidateSuccess() {
+    //     console.log('AddIceCandidate success.');
+    // }
       
-    function onAddIceCandidateError(error) {
-        console.log(`Failed to add ICE candidate: ${error.toString()}`);
-    }
+    // function onAddIceCandidateError(error) {
+    //     console.log(`Failed to add ICE candidate: ${error.toString()}`);
+    // }
 
     function hangup(shouldLeave) {
-        console.log('Ending calls');
-        
         for(let i=0;i<connections;i++) {
             if(RTCObjects.current[i].pcLocal)
                 RTCObjects.current[i].pcLocal.close();
@@ -175,20 +189,26 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcLocal = null;
             RTCObjects.current[i].pcRemote = null;
         }
-
         if(shouldLeave) {
+            if(localStream.current.srcObject) {
+                localStream.current.srcObject.getTracks().forEach(track => {
+                    track.stop();
+                });
+                localStream.current=null;
+            }
+            dispatch(setSettings({ connections, audio: true, video: true, resolution }));
             history.push('/')
         } 
     }
 
     const toggleAudio = () => {
         localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
-        dispatch(setSettings({ connections, video, audio: !audio }));
+        dispatch(setSettings({ connections, video, audio: !audio, resolution }));
     }
 
     const toggleVideo = () => {
         localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
-        dispatch(setSettings({ connections, audio, video: !video }));
+        dispatch(setSettings({ connections, audio, video: !video, resolution }));
     }
 
     const toggleView = () => {
@@ -233,7 +253,7 @@ const TestForm = ({ history }) => {
         <Test
             audio={audio}
             video={video}
-            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video }))}
+            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video, resolution }))}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
             toggleView={toggleView}
