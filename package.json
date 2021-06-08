@@ -18,6 +18,7 @@
     "redux": "^4.0.5",
     "redux-actions": "^2.6.5",
     "redux-devtools-extension": "^2.13.9",
+    "socket.io-client": "^4.1.2",
     "web-vitals": "^1.1.1"
   },
   "scripts": {
@@ -46,5 +47,5 @@
       "last 1 safari version"
     ]
   },
-  "homepage":  "http://yhc002.github.io/rtc-test-app"
+  "homepage": "http://yhc002.github.io/rtc-test-app"
 }

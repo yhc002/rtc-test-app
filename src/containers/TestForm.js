@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { withRouter } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import io from "socket.io-client";
 import Test from '../components/TestUI'
 import { setSettings } from '../modules/rtc';
 
@@ -11,11 +12,16 @@ const TestForm = ({ history }) => {
         video: rtc.setting.video,
         resolution: rtc.setting.resolution,
     }));
+    const room=1;
     const dispatch = useDispatch();
 
     const localStream=useRef();
     const RTCObjects =useRef(Array.from({ length: 100 },() => {return { pcLocal: null , pcRemote: null }}));
 
+    const [socket, setSocket] = useState(null);
+
+    //state for recieving offer/answer message
+    const [remoteSignal, setRemoteSignal] = useState(null);
     const remoteRefs = useRef(Array.from({ length: 100 },() => null))
 
     const [areaWidth, setAreaWidth] = useState(0);
@@ -41,6 +47,21 @@ const TestForm = ({ history }) => {
         resizeVideos();
     },[connections]);
 
+    //initiate after socket is set
+    useEffect(() => {
+        if(socket)
+        {
+            configSocket(room)
+        }
+    }, [socket])
+
+    //inititate after offer signal is received
+    useEffect(() => {
+        if(remoteSignal){
+            console.log("useEffect!",remoteSignal)
+            acceptCall(room);
+        }
+    },[remoteSignal]);
 
     useEffect(() => {
         resizeVideos();
@@ -99,14 +120,38 @@ const TestForm = ({ history }) => {
         try {
             await navigator.mediaDevices.getUserMedia({ audio: audio || true, video: video ? resolution : true }).then(stream => {
                 localStream.current.srcObject = stream;
-                const track = stream.getVideoTracks()[0]
-                const settings = track.getSettings();
             });
             localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
             localStream.current.srcObject.getVideoTracks()[0].enabled = video;
-            call();
+            setSocket(io("http://192.168.0.3:8000"));
+            // call();
         } catch (e) {
             console.log("getUserMedia error",e)
+        }
+    }
+
+    //attempt to create/enter room
+    const configSocket = (room) => {
+        try{
+            //emit message requesting to enter/create room
+            socket.emit("enterRoom", room, "user");
+            //procedure to handle situation where an opponent entered the room
+            socket.on("joined",(user)=>{ initCall() });
+            //handle offer received
+            socket.on("offer-to-callee", (data) => {
+                console.log("received offer", data)
+                setRemoteSignal(data);
+            });
+            //handle ending phone call
+            // socket.on("end",(message)=>{
+            //     setEndMessage(message);
+            //     setEndPopup(true);
+            // });
+            socket.once("joinResult",(result)=>{
+                console.log('joinResult',result);
+            });
+        } catch(error){
+            console.log("room enter error", error);
         }
     }
 
@@ -127,24 +172,57 @@ const TestForm = ({ history }) => {
         }
     }
 
+    const initCall = async () => {
+        RTCObjects.current[0] = new RTCPeerConnection(null);
+        RTCObjects.current[0].onicecandidate = (event)=>iceCallbackLocal(event, 0);
+        localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[0].addTrack(track, localStream.current.srcObject));
+        RTCObjects.current[0]
+            .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
+            .then((event)=>gotDescriptionLocal(event,0), onCreateSessionDescriptionError);
+
+         //handle answer message
+         socket.on("signal-to-caller", signal => {
+            console.log("signal-to-caller", signal)
+            if(signal.type === "answer") {
+                gotDescriptionRemote(signal, 0);
+            } else {
+                RTCObjects.current[0].addIceCandidate(data, signal);
+            }
+        });
+    }
+
+    const acceptCall = async () => {
+        RTCObjects.current[0] = new RTCPeerConnection(null);
+        RTCObjects.current[0].pcRemote.ontrack = (event)=>gotRemoteStream(event, 0);
+        RTCObjects.current[0].onicecandidate = (event)=>iceCallbackRemote(event, 0);
+
+        RTCObjects.current[0].setRemoteDescription(remoteSignal);
+        RTCObjects.current[0].createAnswer().then((event)=>gotDescriptionRemote(event, 0), onCreateSessionDescriptionError);
+
+        //handle candidate messages
+        socket.on("candidate-to-callee", (data) => {
+            console.log("callee received candidate", data)
+            RTCObjects.current[0].addIceCandidate(data);
+            //handleCandidate(data, remoteSignal);
+        });
+    }
+
     function onCreateSessionDescriptionError(error) {
         console.log(`Failed to create session description: ${error.toString()}`);
     }
     
     function gotDescriptionLocal(desc, idx) {
-        RTCObjects.current[idx].pcLocal.setLocalDescription(desc);
+        RTCObjects.current[0].setLocalDescription(desc);
+        socket.emit("caller-to-server", { room, signalData: desc });
         // console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
-        RTCObjects.current[idx].pcRemote.setRemoteDescription(desc);
-        // Since the 'remote' side has no media stream we need
-        // to pass in the right constraints in order for it to
-        // accept the incoming offer of audio and video.
-        RTCObjects.current[idx].pcRemote.createAnswer().then((event)=>gotDescriptionRemote(event, idx), onCreateSessionDescriptionError);
+        // RTCObjects.current[idx].pcRemote.setRemoteDescription(desc);
+        // RTCObjects.current[idx].pcRemote.createAnswer().then((event)=>gotDescriptionRemote(event, idx), onCreateSessionDescriptionError);
     }
       
     function gotDescriptionRemote(desc, idx) {
-        RTCObjects.current[idx].pcRemote.setLocalDescription(desc);
+        // RTCObjects.current[idx].pcRemote.setLocalDescription(desc);
         // console.log(`Answer from pc${idx}Remote\n${desc.sdp}`);
-        RTCObjects.current[idx].pcLocal.setRemoteDescription(desc);
+        RTCObjects.current[idx].setRemoteDescription(desc);
     }
 
     function gotRemoteStream(e, idx) {
@@ -159,11 +237,13 @@ const TestForm = ({ history }) => {
     }
 
     function iceCallbackLocal(event, idx) {
-        handleCandidate(event.candidate, RTCObjects.current[idx].pcRemote, `pc${idx}: `, 'local');
+        socket.emit("caller-to-server", { room, signalData: event.candidate });
+        // handleCandidate(event.candidate, RTCObjects.current[idx].pcRemote, `pc${idx}: `, 'local');
     }
       
     function iceCallbackRemote(event, idx) {
-        handleCandidate(event.candidate, RTCObjects.current[idx].pcLocal, `pc${idx}: `, 'remote');
+        socket.emit("callee-to-server", { room, signalData: event.candidate });
+        // handleCandidate(event.candidate, RTCObjects.current[idx].pcLocal, `pc${idx}: `, 'remote');
     }
       
     function handleCandidate(candidate, dest, prefix, type) {
@@ -196,6 +276,7 @@ const TestForm = ({ history }) => {
                 });
                 localStream.current=null;
             }
+            socket.emit("leaveRoom", room, "user");
             dispatch(setSettings({ connections, audio: true, video: true, resolution }));
             history.push('/')
         } 

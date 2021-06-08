@@ -14,9 +14,9 @@ const TestUI = ({
         <React.Fragment>
             <div id='my-area'>
                 <People />
+                <p> {connections}</p>
                 <Button onClick={()=>setConnections(connections+1)}>+</Button>
                 <Button onClick={()=>setConnections(connections-1)}>-</Button>
-                <p> {connections}</p>
                 <video id="my-video" ref={localStreamRef} autoPlay={true}  />
             </div>
             <main>
