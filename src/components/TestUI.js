@@ -59,13 +59,13 @@ const TestUI = ({
                     </Grid>
                 </div>
             </main>
-            <StatsPopup
+            {/* <StatsPopup
                 open={statsIsOpen}
                 messages={statMessages}
                 confirm={closeStats}
                 isSender={isSender}
                 setIsSender={setIsSender}
-            />
+            /> */}
         </React.Fragment>
     )
 }

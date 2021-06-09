@@ -123,7 +123,7 @@ const TestForm = ({ history }) => {
             });
             localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
             localStream.current.srcObject.getVideoTracks()[0].enabled = video;
-            setSocket(io("http://192.168.0.3:8000"));
+            setSocket(io("http://192.168.123.102:8000"));
             // call();
         } catch (e) {
             console.log("getUserMedia error",e)
@@ -134,7 +134,7 @@ const TestForm = ({ history }) => {
     const configSocket = (room) => {
         try{
             //emit message requesting to enter/create room
-            socket.emit("enterRoom", room, "user");
+            socket.emit("enterRoom", room, connections);
             //procedure to handle situation where an opponent entered the room
             socket.on("joined",(user)=>{ initCall() });
             //handle offer received
@@ -160,6 +160,8 @@ const TestForm = ({ history }) => {
             RTCObjects.current[i].pcLocal = new RTCPeerConnection(null);
             RTCObjects.current[i].pcRemote = new RTCPeerConnection(null);
 
+            RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
+
             RTCObjects.current[i].pcRemote.ontrack = (event)=>gotRemoteStream(event, i);
             RTCObjects.current[i].pcLocal.onicecandidate = (event)=>iceCallbackLocal(event, i);
             RTCObjects.current[i].pcRemote.onicecandidate = (event)=>iceCallbackRemote(event, i);
@@ -184,19 +186,20 @@ const TestForm = ({ history }) => {
          socket.on("signal-to-caller", signal => {
             console.log("signal-to-caller", signal)
             if(signal.type === "answer") {
-                gotDescriptionRemote(signal, 0);
+                RTCObjects.current[0].setRemoteDescription(signal);
             } else {
-                RTCObjects.current[0].addIceCandidate(data, signal);
+                RTCObjects.current[0].addIceCandidate(signal);
             }
         });
     }
 
     const acceptCall = async () => {
         RTCObjects.current[0] = new RTCPeerConnection(null);
-        RTCObjects.current[0].pcRemote.ontrack = (event)=>gotRemoteStream(event, 0);
+        RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
         RTCObjects.current[0].onicecandidate = (event)=>iceCallbackRemote(event, 0);
 
         RTCObjects.current[0].setRemoteDescription(remoteSignal);
+
         RTCObjects.current[0].createAnswer().then((event)=>gotDescriptionRemote(event, 0), onCreateSessionDescriptionError);
 
         //handle candidate messages
@@ -222,7 +225,8 @@ const TestForm = ({ history }) => {
     function gotDescriptionRemote(desc, idx) {
         // RTCObjects.current[idx].pcRemote.setLocalDescription(desc);
         // console.log(`Answer from pc${idx}Remote\n${desc.sdp}`);
-        RTCObjects.current[idx].setRemoteDescription(desc);
+        RTCObjects.current[idx].setLocalDescription(desc);
+        socket.emit("callee-to-server", { room, signalData: desc });
     }
 
     function gotRemoteStream(e, idx) {
