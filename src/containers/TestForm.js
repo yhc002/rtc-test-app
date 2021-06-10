@@ -182,6 +182,7 @@ const TestForm = ({ history }) => {
             .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
             .then((event)=>gotDescriptionLocal(event,0), onCreateSessionDescriptionError);
 
+        RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
          //handle answer message
          socket.on("signal-to-caller", signal => {
             console.log("signal-to-caller", signal)
@@ -197,7 +198,8 @@ const TestForm = ({ history }) => {
         RTCObjects.current[0] = new RTCPeerConnection(null);
         RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
         RTCObjects.current[0].onicecandidate = (event)=>iceCallbackRemote(event, 0);
-
+        localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[0].addTrack(track, localStream.current.srcObject));
+        
         RTCObjects.current[0].setRemoteDescription(remoteSignal);
 
         RTCObjects.current[0].createAnswer().then((event)=>gotDescriptionRemote(event, 0), onCreateSessionDescriptionError);
