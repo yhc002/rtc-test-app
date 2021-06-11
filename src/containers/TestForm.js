@@ -16,12 +16,10 @@ const TestForm = ({ history }) => {
     const dispatch = useDispatch();
 
     const localStream=useRef();
-    const RTCObjects =useRef(Array.from({ length: 100 },() => {return { pcLocal: null , pcRemote: null }}));
+    const RTCObjects =useRef(Array.from({ length: 100 },() => null));
 
     const [socket, setSocket] = useState(null);
 
-    //state for recieving offer/answer message
-    const [remoteSignal, setRemoteSignal] = useState(null);
     const remoteRefs = useRef(Array.from({ length: 100 },() => null))
 
     const [areaWidth, setAreaWidth] = useState(0);
@@ -54,14 +52,6 @@ const TestForm = ({ history }) => {
             configSocket(room)
         }
     }, [socket])
-
-    //inititate after offer signal is received
-    useEffect(() => {
-        if(remoteSignal){
-            console.log("useEffect!",remoteSignal)
-            acceptCall(room);
-        }
-    },[remoteSignal]);
 
     useEffect(() => {
         resizeVideos();
@@ -123,8 +113,7 @@ const TestForm = ({ history }) => {
             });
             localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
             localStream.current.srcObject.getVideoTracks()[0].enabled = video;
-            setSocket(io("http://192.168.123.102:8000"));
-            // call();
+            setSocket(io("http://192.168.0.3:8000"));
         } catch (e) {
             console.log("getUserMedia error",e)
         }
@@ -134,13 +123,13 @@ const TestForm = ({ history }) => {
     const configSocket = (room) => {
         try{
             //emit message requesting to enter/create room
-            socket.emit("enterRoom", room, connections);
+            socket.emit("enterRoom", room);
             //procedure to handle situation where an opponent entered the room
-            socket.on("joined",(user)=>{ initCall() });
+            socket.on("joined",()=>{ initCall() });
             //handle offer received
             socket.on("offer-to-callee", (data) => {
                 console.log("received offer", data)
-                setRemoteSignal(data);
+                acceptCall(data.signalData, data.idx);
             });
             //handle ending phone call
             // socket.on("end",(message)=>{
@@ -155,60 +144,45 @@ const TestForm = ({ history }) => {
         }
     }
 
-    const call = async () => {
-        for(let i=0; i<connections; i++) {
-            RTCObjects.current[i].pcLocal = new RTCPeerConnection(null);
-            RTCObjects.current[i].pcRemote = new RTCPeerConnection(null);
-
-            RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
-
-            RTCObjects.current[i].pcRemote.ontrack = (event)=>gotRemoteStream(event, i);
-            RTCObjects.current[i].pcLocal.onicecandidate = (event)=>iceCallbackLocal(event, i);
-            RTCObjects.current[i].pcRemote.onicecandidate = (event)=>iceCallbackRemote(event, i);
-
-            localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].pcLocal.addTrack(track, localStream.current.srcObject));
-
-            RTCObjects.current[i].pcLocal
+    const initCall = async () => {
+        for(let i=0;i<connections;i++) {
+            RTCObjects.current[i] = new RTCPeerConnection(null);
+            RTCObjects.current[i].onicecandidate = (event)=>iceCallbackLocal(event, i);
+            if(localStream.current && localStream.current.srcObject) {
+                localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].addTrack(track, localStream.current.srcObject));
+            }
+            RTCObjects.current[i]
                 .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
                 .then((event)=>gotDescriptionLocal(event,i), onCreateSessionDescriptionError);
+
+            RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
         }
-    }
-
-    const initCall = async () => {
-        RTCObjects.current[0] = new RTCPeerConnection(null);
-        RTCObjects.current[0].onicecandidate = (event)=>iceCallbackLocal(event, 0);
-        localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[0].addTrack(track, localStream.current.srcObject));
-        RTCObjects.current[0]
-            .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
-            .then((event)=>gotDescriptionLocal(event,0), onCreateSessionDescriptionError);
-
-        RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
          //handle answer message
-         socket.on("signal-to-caller", signal => {
-            console.log("signal-to-caller", signal)
-            if(signal.type === "answer") {
-                RTCObjects.current[0].setRemoteDescription(signal);
-            } else {
-                RTCObjects.current[0].addIceCandidate(signal);
+         socket.on("signal-to-caller", data => {
+            console.log("signal-to-caller", data)
+            if(data.signalData.type === "answer") {
+                RTCObjects.current[data.idx].setRemoteDescription(data.signalData);
+            } else if(data.signalData.type === "candidate") {
+                RTCObjects.current[data.idx].addIceCandidate(data.signalData);
             }
         });
     }
 
-    const acceptCall = async () => {
-        RTCObjects.current[0] = new RTCPeerConnection(null);
-        RTCObjects.current[0].ontrack = (event)=>gotRemoteStream(event, 0);
-        RTCObjects.current[0].onicecandidate = (event)=>iceCallbackRemote(event, 0);
-        localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[0].addTrack(track, localStream.current.srcObject));
+    const acceptCall = async (remoteSignal, i) => {
+        RTCObjects.current[i] = new RTCPeerConnection(null);
+        RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
+        RTCObjects.current[i].onicecandidate = (event)=>iceCallbackRemote(event, i);
+        if(localStream.current && localStream.current.srcObject) {
+            localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].addTrack(track, localStream.current.srcObject));
+        }
         
-        RTCObjects.current[0].setRemoteDescription(remoteSignal);
+        RTCObjects.current[i].setRemoteDescription(remoteSignal);
 
-        RTCObjects.current[0].createAnswer().then((event)=>gotDescriptionRemote(event, 0), onCreateSessionDescriptionError);
-
+        RTCObjects.current[i].createAnswer().then((event)=>gotDescriptionRemote(event, i), onCreateSessionDescriptionError);
         //handle candidate messages
         socket.on("candidate-to-callee", (data) => {
             console.log("callee received candidate", data)
-            RTCObjects.current[0].addIceCandidate(data);
-            //handleCandidate(data, remoteSignal);
+            RTCObjects.current[data.idx].addIceCandidate(data.signalData);
         });
     }
 
@@ -217,9 +191,9 @@ const TestForm = ({ history }) => {
     }
     
     function gotDescriptionLocal(desc, idx) {
-        RTCObjects.current[0].setLocalDescription(desc);
-        socket.emit("caller-to-server", { room, signalData: desc });
-        // console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
+        RTCObjects.current[idx].setLocalDescription(desc);
+        socket.emit("caller-to-server", { room, signalData: desc, idx });
+        console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
         // RTCObjects.current[idx].pcRemote.setRemoteDescription(desc);
         // RTCObjects.current[idx].pcRemote.createAnswer().then((event)=>gotDescriptionRemote(event, idx), onCreateSessionDescriptionError);
     }
@@ -228,7 +202,7 @@ const TestForm = ({ history }) => {
         // RTCObjects.current[idx].pcRemote.setLocalDescription(desc);
         // console.log(`Answer from pc${idx}Remote\n${desc.sdp}`);
         RTCObjects.current[idx].setLocalDescription(desc);
-        socket.emit("callee-to-server", { room, signalData: desc });
+        socket.emit("callee-to-server", { room, signalData: desc, idx });
     }
 
     function gotRemoteStream(e, idx) {
@@ -243,37 +217,20 @@ const TestForm = ({ history }) => {
     }
 
     function iceCallbackLocal(event, idx) {
-        socket.emit("caller-to-server", { room, signalData: event.candidate });
+        socket.emit("caller-to-server", { room, signalData: event.candidate, idx });
         // handleCandidate(event.candidate, RTCObjects.current[idx].pcRemote, `pc${idx}: `, 'local');
     }
       
     function iceCallbackRemote(event, idx) {
-        socket.emit("callee-to-server", { room, signalData: event.candidate });
+        socket.emit("callee-to-server", { room, signalData: event.candidate, idx });
         // handleCandidate(event.candidate, RTCObjects.current[idx].pcLocal, `pc${idx}: `, 'remote');
     }
       
-    function handleCandidate(candidate, dest, prefix, type) {
-        dest.addIceCandidate(candidate)
-            // .then(onAddIceCandidateSuccess, onAddIceCandidateError);
-        //console.log(`${prefix}New ${type} ICE candidate: ${candidate ? candidate.candidate : '(null)'}`);
-    }
-      
-    // function onAddIceCandidateSuccess() {
-    //     console.log('AddIceCandidate success.');
-    // }
-      
-    // function onAddIceCandidateError(error) {
-    //     console.log(`Failed to add ICE candidate: ${error.toString()}`);
-    // }
-
     function hangup(shouldLeave) {
         for(let i=0;i<connections;i++) {
-            if(RTCObjects.current[i].pcLocal)
-                RTCObjects.current[i].pcLocal.close();
-            if(RTCObjects.current[i].pcRemote)
-                RTCObjects.current[i].pcRemote.close();
-            RTCObjects.current[i].pcLocal = null;
-            RTCObjects.current[i].pcRemote = null;
+            if(RTCObjects.current[i])
+                RTCObjects.current[i].close();
+            RTCObjects.current[i] = null;
         }
         if(shouldLeave) {
             if(localStream.current.srcObject) {
@@ -282,20 +239,25 @@ const TestForm = ({ history }) => {
                 });
                 localStream.current=null;
             }
-            socket.emit("leaveRoom", room, "user");
+            socket.emit("leaveRoom", room);
+            setSocket(null);
             dispatch(setSettings({ connections, audio: true, video: true, resolution }));
             history.push('/')
         } 
     }
 
     const toggleAudio = () => {
-        localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
-        dispatch(setSettings({ connections, video, audio: !audio, resolution }));
+        if(localStream.current.srcObject) {
+            localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
+            dispatch(setSettings({ connections, video, audio: !audio, resolution }));
+        }
     }
 
     const toggleVideo = () => {
-        localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
-        dispatch(setSettings({ connections, audio, video: !video, resolution }));
+        if(localStream.current.srcObject) {
+            localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
+            dispatch(setSettings({ connections, audio, video: !video, resolution }));
+        }
     }
 
     const toggleView = () => {

@@ -58,7 +58,7 @@ const HomeUI = ({
                                 </Grid>
                             </Grid>
                             <Grid item>
-                                <Button variant="contained" onClick={initCall} disabled={!foundLocal}>
+                                <Button variant="contained" onClick={initCall}>
                                     지금 참여하기
                                 </Button>
                             </Grid>
