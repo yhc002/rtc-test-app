@@ -34,14 +34,14 @@ const TestForm = ({ history }) => {
     useEffect(() => {
         resizeWindow();
         window.addEventListener('resize', resizeWindow);
+        init();
         return () => { // cleanup 
           window.removeEventListener('resize', resizeWindow);
         }
       }, []);
 
     useEffect(() => {
-        hangup(false);
-        init();
+        // hangup(false);
         resizeVideos();
     },[connections]);
 
@@ -125,17 +125,34 @@ const TestForm = ({ history }) => {
             //emit message requesting to enter/create room
             socket.emit("enterRoom", room);
             //procedure to handle situation where an opponent entered the room
-            socket.on("joined",()=>{ initCall() });
+            socket.on("joined",()=>{
+                for(let i=0; i<connections; i++) {
+                    initCall(i);
+                }
+                //handle answer message
+                socket.on("signal-to-caller", data => {
+                    console.log("signal-to-caller", data)
+                    if(data.signalData.type === "answer") {
+                        RTCObjects.current[data.idx].setRemoteDescription(data.signalData);
+                    } else if(data.signalData.type === "candidate") {
+                        RTCObjects.current[data.idx].addIceCandidate(data.signalData);
+                    }
+                });
+            });
             //handle offer received
             socket.on("offer-to-callee", (data) => {
                 console.log("received offer", data)
                 acceptCall(data.signalData, data.idx);
+                //handle candidate messages
+                socket.on("candidate-to-callee", (data) => {
+                    console.log("callee received candidate", data)
+                    RTCObjects.current[data.idx].addIceCandidate(data.signalData);
+                });
             });
             //handle ending phone call
-            // socket.on("end",(message)=>{
-            //     setEndMessage(message);
-            //     setEndPopup(true);
-            // });
+            socket.on("end",(message)=>{
+                hangup(false);
+            });
             socket.once("joinResult",(result)=>{
                 console.log('joinResult',result);
             });
@@ -144,28 +161,17 @@ const TestForm = ({ history }) => {
         }
     }
 
-    const initCall = async () => {
-        for(let i=0;i<connections;i++) {
-            RTCObjects.current[i] = new RTCPeerConnection(null);
-            RTCObjects.current[i].onicecandidate = (event)=>iceCallbackLocal(event, i);
-            if(localStream.current && localStream.current.srcObject) {
-                localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].addTrack(track, localStream.current.srcObject));
-            }
-            RTCObjects.current[i]
-                .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
-                .then((event)=>gotDescriptionLocal(event,i), onCreateSessionDescriptionError);
-
-            RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
+    const initCall = async (i) => {
+        RTCObjects.current[i] = new RTCPeerConnection(null);
+        RTCObjects.current[i].onicecandidate = (event)=>iceCallbackLocal(event, i);
+        if(localStream.current && localStream.current.srcObject) {
+            localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].addTrack(track, localStream.current.srcObject));
         }
-         //handle answer message
-         socket.on("signal-to-caller", data => {
-            console.log("signal-to-caller", data)
-            if(data.signalData.type === "answer") {
-                RTCObjects.current[data.idx].setRemoteDescription(data.signalData);
-            } else if(data.signalData.type === "candidate") {
-                RTCObjects.current[data.idx].addIceCandidate(data.signalData);
-            }
-        });
+        RTCObjects.current[i]
+            .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
+            .then((event)=>gotDescriptionLocal(event,i), onCreateSessionDescriptionError);
+
+        RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
     }
 
     const acceptCall = async (remoteSignal, i) => {
@@ -179,11 +185,6 @@ const TestForm = ({ history }) => {
         RTCObjects.current[i].setRemoteDescription(remoteSignal);
 
         RTCObjects.current[i].createAnswer().then((event)=>gotDescriptionRemote(event, i), onCreateSessionDescriptionError);
-        //handle candidate messages
-        socket.on("candidate-to-callee", (data) => {
-            console.log("callee received candidate", data)
-            RTCObjects.current[data.idx].addIceCandidate(data.signalData);
-        });
     }
 
     function onCreateSessionDescriptionError(error) {
@@ -226,11 +227,12 @@ const TestForm = ({ history }) => {
         // handleCandidate(event.candidate, RTCObjects.current[idx].pcLocal, `pc${idx}: `, 'remote');
     }
       
-    function hangup(shouldLeave) {
+    const hangup = (shouldLeave) => {
         for(let i=0;i<connections;i++) {
-            if(RTCObjects.current[i])
+            if(RTCObjects.current[i]) {
                 RTCObjects.current[i].close();
-            RTCObjects.current[i] = null;
+                RTCObjects.current[i] = null;
+            }
         }
         if(shouldLeave) {
             if(localStream.current.srcObject) {
@@ -238,12 +240,25 @@ const TestForm = ({ history }) => {
                     track.stop();
                 });
                 localStream.current=null;
+                socket.emit("leaveRoom", room);
+                setSocket(null);
             }
-            socket.emit("leaveRoom", room);
-            setSocket(null);
             dispatch(setSettings({ connections, audio: true, video: true, resolution }));
             history.push('/')
         } 
+    }
+
+    const adjustConnection = (val) => {
+        if(val>connections) {
+            for(let i=connections;i<val;i++) {
+                initCall(i);
+            }
+        } else {
+            for(let i=val;i<connections;i++) {
+                initCall(i);
+            }
+        }
+        dispatch(setSettings({ connections: val, audio, video, resolution }));
     }
 
     const toggleAudio = () => {
