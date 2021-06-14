@@ -12,7 +12,10 @@ const TestForm = ({ history }) => {
         video: rtc.setting.video,
         resolution: rtc.setting.resolution,
     }));
+
     const room=1;
+    const [isHost, setIsHost] = useState(false);
+
     const dispatch = useDispatch();
 
     const localStream=useRef();
@@ -35,13 +38,13 @@ const TestForm = ({ history }) => {
         resizeWindow();
         window.addEventListener('resize', resizeWindow);
         init();
-        return () => { // cleanup 
-          window.removeEventListener('resize', resizeWindow);
+        return () => { // cleanup
+            window.removeEventListener('resize', resizeWindow);
+            dispatch(setSettings({ connections, audio: true, video: true, resolution }));
         }
       }, []);
 
     useEffect(() => {
-        // hangup(false);
         resizeVideos();
     },[connections]);
 
@@ -113,7 +116,7 @@ const TestForm = ({ history }) => {
             });
             localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
             localStream.current.srcObject.getVideoTracks()[0].enabled = video;
-            setSocket(io("http://192.168.0.3:8000"));
+            setSocket(io("https://rtc-test-app.herokuapp.com/"));
         } catch (e) {
             console.log("getUserMedia error",e)
         }
@@ -127,6 +130,7 @@ const TestForm = ({ history }) => {
             //procedure to handle situation where an opponent entered the room
             socket.on("joined",()=>{
                 for(let i=0; i<connections; i++) {
+                    setIsHost(true);
                     initCall(i);
                 }
                 //handle answer message
@@ -149,8 +153,9 @@ const TestForm = ({ history }) => {
                     RTCObjects.current[data.idx].addIceCandidate(data.signalData);
                 });
             });
+            socket.on("close",i => closeRTC(i));
             //handle ending phone call
-            socket.on("end",(message)=>{
+            socket.on("end",()=>{
                 hangup(false);
             });
             socket.once("joinResult",(result)=>{
@@ -195,13 +200,9 @@ const TestForm = ({ history }) => {
         RTCObjects.current[idx].setLocalDescription(desc);
         socket.emit("caller-to-server", { room, signalData: desc, idx });
         console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
-        // RTCObjects.current[idx].pcRemote.setRemoteDescription(desc);
-        // RTCObjects.current[idx].pcRemote.createAnswer().then((event)=>gotDescriptionRemote(event, idx), onCreateSessionDescriptionError);
     }
       
     function gotDescriptionRemote(desc, idx) {
-        // RTCObjects.current[idx].pcRemote.setLocalDescription(desc);
-        // console.log(`Answer from pc${idx}Remote\n${desc.sdp}`);
         RTCObjects.current[idx].setLocalDescription(desc);
         socket.emit("callee-to-server", { room, signalData: desc, idx });
     }
@@ -226,24 +227,33 @@ const TestForm = ({ history }) => {
         socket.emit("callee-to-server", { room, signalData: event.candidate, idx });
         // handleCandidate(event.candidate, RTCObjects.current[idx].pcLocal, `pc${idx}: `, 'remote');
     }
-      
+
+    const closeRTC = (i) => {
+        if(RTCObjects.current[i]) {
+            RTCObjects.current[i].close();
+            RTCObjects.current[i] = null;
+        }
+        if(isHost) {
+            socket.emit("close",room,i);
+        }//if host
+    }
+
     const hangup = (shouldLeave) => {
         for(let i=0;i<connections;i++) {
-            if(RTCObjects.current[i]) {
-                RTCObjects.current[i].close();
-                RTCObjects.current[i] = null;
-            }
+            closeRTC(i);
         }
         if(shouldLeave) {
-            if(localStream.current.srcObject) {
+            if(localStream.current && localStream.current.srcObject) {
                 localStream.current.srcObject.getTracks().forEach(track => {
                     track.stop();
                 });
                 localStream.current=null;
-                socket.emit("leaveRoom", room);
                 setSocket(null);
             }
-            dispatch(setSettings({ connections, audio: true, video: true, resolution }));
+            if(socket) {
+                socket.emit("leaveRoom", room);
+                socket.disconnect();
+            }
             history.push('/')
         } 
     }
@@ -255,7 +265,7 @@ const TestForm = ({ history }) => {
             }
         } else {
             for(let i=val;i<connections;i++) {
-                initCall(i);
+                closeRTC(i);
             }
         }
         dispatch(setSettings({ connections: val, audio, video, resolution }));
@@ -317,7 +327,7 @@ const TestForm = ({ history }) => {
         <Test
             audio={audio}
             video={video}
-            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video, resolution }))}
+            setConnections={(val)=>adjustConnection(val)}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
             toggleView={toggleView}
