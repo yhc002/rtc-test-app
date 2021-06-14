@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/rtc-test-app/static/css/main.012afdab.chunk.css",
-    "main.js": "/rtc-test-app/static/js/main.a8d88657.chunk.js",
-    "main.js.map": "/rtc-test-app/static/js/main.a8d88657.chunk.js.map",
+    "main.js": "/rtc-test-app/static/js/main.90ea3256.chunk.js",
+    "main.js.map": "/rtc-test-app/static/js/main.90ea3256.chunk.js.map",
     "runtime-main.js": "/rtc-test-app/static/js/runtime-main.0d5df1f0.js",
     "runtime-main.js.map": "/rtc-test-app/static/js/runtime-main.0d5df1f0.js.map",
-    "static/js/2.dd11f194.chunk.js": "/rtc-test-app/static/js/2.dd11f194.chunk.js",
-    "static/js/2.dd11f194.chunk.js.map": "/rtc-test-app/static/js/2.dd11f194.chunk.js.map",
+    "static/js/2.7bea71ae.chunk.js": "/rtc-test-app/static/js/2.7bea71ae.chunk.js",
+    "static/js/2.7bea71ae.chunk.js.map": "/rtc-test-app/static/js/2.7bea71ae.chunk.js.map",
     "static/js/3.133cac68.chunk.js": "/rtc-test-app/static/js/3.133cac68.chunk.js",
     "static/js/3.133cac68.chunk.js.map": "/rtc-test-app/static/js/3.133cac68.chunk.js.map",
     "index.html": "/rtc-test-app/index.html",
     "static/css/main.012afdab.chunk.css.map": "/rtc-test-app/static/css/main.012afdab.chunk.css.map",
-    "static/js/2.dd11f194.chunk.js.LICENSE.txt": "/rtc-test-app/static/js/2.dd11f194.chunk.js.LICENSE.txt"
+    "static/js/2.7bea71ae.chunk.js.LICENSE.txt": "/rtc-test-app/static/js/2.7bea71ae.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.0d5df1f0.js",
-    "static/js/2.dd11f194.chunk.js",
+    "static/js/2.7bea71ae.chunk.js",
     "static/css/main.012afdab.chunk.css",
-    "static/js/main.a8d88657.chunk.js"
+    "static/js/main.90ea3256.chunk.js"
   ]
 }
