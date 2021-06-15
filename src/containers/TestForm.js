@@ -38,9 +38,9 @@ const TestForm = ({ history }) => {
         resizeWindow();
         window.addEventListener('resize', resizeWindow);
         init();
+        setSocket(io("https://rtc-test-app.herokuapp.com/"));
         return () => { // cleanup
             window.removeEventListener('resize', resizeWindow);
-            dispatch(setSettings({ connections, audio: true, video: true, resolution }));
         }
       }, []);
 
@@ -116,7 +116,6 @@ const TestForm = ({ history }) => {
             });
             localStream.current.srcObject.getAudioTracks()[0].enabled = audio;
             localStream.current.srcObject.getVideoTracks()[0].enabled = video;
-            setSocket(io("https://rtc-test-app.herokuapp.com/"));
         } catch (e) {
             console.log("getUserMedia error",e)
         }
@@ -129,23 +128,24 @@ const TestForm = ({ history }) => {
             socket.emit("enterRoom", room);
             //procedure to handle situation where an opponent entered the room
             socket.on("joined",()=>{
+                setIsHost(true);
                 for(let i=0; i<connections; i++) {
-                    setIsHost(true);
                     initCall(i);
                 }
                 //handle answer message
                 socket.on("signal-to-caller", data => {
-                    console.log("signal-to-caller", data)
                     if(data.signalData.type === "answer") {
                         RTCObjects.current[data.idx].setRemoteDescription(data.signalData);
-                    } else if(data.signalData.type === "candidate") {
+                        console.log("caller received answer", data)
+                    } else if (data.signalData.candidate) {
                         RTCObjects.current[data.idx].addIceCandidate(data.signalData);
-                    }
+                        console.log("caller received candidate", data)
+                    } 
                 });
             });
             //handle offer received
             socket.on("offer-to-callee", (data) => {
-                console.log("received offer", data)
+                console.log("callee received offer", data)
                 acceptCall(data.signalData, data.idx);
                 //handle candidate messages
                 socket.on("candidate-to-callee", (data) => {
@@ -167,21 +167,28 @@ const TestForm = ({ history }) => {
     }
 
     const initCall = async (i) => {
-        RTCObjects.current[i] = new RTCPeerConnection(null);
+        RTCObjects.current[i] = new RTCPeerConnection({
+            config: {
+                iceServers: [{urls: ['turn:10.186.117.86:3478?transport=udp'], credential: '1234', username: 'test'}],
+            },
+        });
         RTCObjects.current[i].onicecandidate = (event)=>iceCallbackLocal(event, i);
         if(localStream.current && localStream.current.srcObject) {
             localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].addTrack(track, localStream.current.srcObject));
         }
         RTCObjects.current[i]
             .createOffer({ offerToReceiveAudio: 1, offerToReceiveVideo: 1 })
-            .then((event)=>gotDescriptionLocal(event,i), onCreateSessionDescriptionError);
+            .then((event)=>onCreateOffer(event,i), onCreateSessionDescriptionError);
 
         RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
     }
 
     const acceptCall = async (remoteSignal, i) => {
-        RTCObjects.current[i] = new RTCPeerConnection(null);
-        RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
+        RTCObjects.current[i] = new RTCPeerConnection({
+            config: {
+                iceServers: [{urls: ['turn:10.186.117.86:3478?transport=udp'], credential: '1234', username: 'test'}],
+            },
+        });
         RTCObjects.current[i].onicecandidate = (event)=>iceCallbackRemote(event, i);
         if(localStream.current && localStream.current.srcObject) {
             localStream.current.srcObject.getTracks().forEach(track => RTCObjects.current[i].addTrack(track, localStream.current.srcObject));
@@ -189,20 +196,22 @@ const TestForm = ({ history }) => {
         
         RTCObjects.current[i].setRemoteDescription(remoteSignal);
 
-        RTCObjects.current[i].createAnswer().then((event)=>gotDescriptionRemote(event, i), onCreateSessionDescriptionError);
+        RTCObjects.current[i].createAnswer().then((event)=>onCreateAnswer(event, i), onCreateSessionDescriptionError);
+        RTCObjects.current[i].ontrack = (event)=>gotRemoteStream(event, i);
     }
 
     function onCreateSessionDescriptionError(error) {
         console.log(`Failed to create session description: ${error.toString()}`);
     }
     
-    function gotDescriptionLocal(desc, idx) {
+    function onCreateOffer(desc, idx) {
         RTCObjects.current[idx].setLocalDescription(desc);
         socket.emit("caller-to-server", { room, signalData: desc, idx });
-        console.log(`Offer from pc${idx}Local\n${desc.sdp}`);
+        console.log('create offer', desc);
     }
       
-    function gotDescriptionRemote(desc, idx) {
+    function onCreateAnswer(desc, idx) {
+        console.log('create answer');
         RTCObjects.current[idx].setLocalDescription(desc);
         socket.emit("callee-to-server", { room, signalData: desc, idx });
     }
@@ -211,21 +220,23 @@ const TestForm = ({ history }) => {
         if (remoteRefs.current[idx] !== e.streams[0]) {
             remoteRefs.current[idx] = e.streams[0];
             const vid = document.getElementById(`remote-video ${idx}`);
-            if(vid) { vid.srcObject = remoteRefs.current[idx] }
-            console.log(`pc${idx}: received remote stream`);
+            if(vid) {
+                vid.srcObject = remoteRefs.current[idx];
+                console.log(`pc${idx}: set remote stream as srcObject`);
+            } else {
+                console.log(`pc${idx}: set fail remote stream`, vid);
+            }
         } else {
-            console.log("test failed!")
+            console.log(`pc${idx}: failed to receive remote stream`)
         }
     }
 
     function iceCallbackLocal(event, idx) {
         socket.emit("caller-to-server", { room, signalData: event.candidate, idx });
-        // handleCandidate(event.candidate, RTCObjects.current[idx].pcRemote, `pc${idx}: `, 'local');
     }
       
     function iceCallbackRemote(event, idx) {
         socket.emit("callee-to-server", { room, signalData: event.candidate, idx });
-        // handleCandidate(event.candidate, RTCObjects.current[idx].pcLocal, `pc${idx}: `, 'remote');
     }
 
     const closeRTC = (i) => {
@@ -248,11 +259,12 @@ const TestForm = ({ history }) => {
                     track.stop();
                 });
                 localStream.current=null;
-                setSocket(null);
             }
             if(socket) {
+                console.log("should disconnect socket")
                 socket.emit("leaveRoom", room);
-                socket.disconnect();
+                // socket.disconnect();
+                dispatch(setSettings({ connections, audio: true, video: true, resolution }));
             }
             history.push('/')
         } 
