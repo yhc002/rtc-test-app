@@ -137,10 +137,10 @@ const TestForm = ({ history }) => {
                     if(data.signalData.type === "answer") {
                         RTCObjects.current[data.idx].setRemoteDescription(data.signalData);
                         console.log("caller received answer", data)
-                    } else if(data.signalData.type === "candidate") {
+                    } else if (data.signalData.candidate) {
                         RTCObjects.current[data.idx].addIceCandidate(data.signalData);
                         console.log("caller received candidate", data)
-                    }
+                    } 
                 });
             });
             //handle offer received
@@ -262,8 +262,8 @@ const TestForm = ({ history }) => {
             }
             if(socket) {
                 console.log("should disconnect socket")
-                // socket.emit("leaveRoom", room);
-                socket.disconnect();
+                socket.emit("leaveRoom", room);
+                // socket.disconnect();
                 dispatch(setSettings({ connections, audio: true, video: true, resolution }));
             }
             history.push('/')
