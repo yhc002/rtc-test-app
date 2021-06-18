@@ -129,6 +129,7 @@ const TestForm = ({ history }) => {
             //procedure to handle situation where an opponent entered the room
             socket.on("joined",()=>{
                 setIsHost(true);
+                socket.emit("connections-adjusted", room, connections);
                 for(let i=0; i<connections; i++) {
                     initCall(i);
                 }
@@ -148,10 +149,11 @@ const TestForm = ({ history }) => {
                 console.log("callee received offer", data)
                 acceptCall(data.signalData, data.idx);
                 //handle candidate messages
-                socket.on("candidate-to-callee", (data) => {
-                    console.log("callee received candidate", data)
-                    RTCObjects.current[data.idx].addIceCandidate(data.signalData);
-                });
+            });
+            socket.on("adjust-connections",(connections)=>dispatch(setSettings({ connections, audio, video, resolution })));
+            socket.on("candidate-to-callee", (data) => {
+                console.log("callee received candidate", data)
+                RTCObjects.current[data.idx].addIceCandidate(data.signalData);
             });
             socket.on("close",i => closeRTC(i));
             //handle ending phone call
@@ -206,7 +208,7 @@ const TestForm = ({ history }) => {
     
     function onCreateOffer(desc, idx) {
         RTCObjects.current[idx].setLocalDescription(desc);
-        socket.emit("caller-to-server", { room, signalData: desc, idx });
+        socket.emit("caller-to-server", { room, signalData: desc, idx, connections });
         console.log('create offer', desc);
     }
       
@@ -271,6 +273,7 @@ const TestForm = ({ history }) => {
     }
 
     const adjustConnection = (val) => {
+        socket.emit("connections-adjusted",room,val);
         if(val>connections) {
             for(let i=connections;i<val;i++) {
                 initCall(i);
