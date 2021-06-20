@@ -6,14 +6,14 @@ import Test from '../components/TestUI'
 import { setSettings } from '../modules/rtc';
 
 const TestForm = ({ history }) => {
-    const { connections, audio, video, resolution } = useSelector(({ rtc }) => ({
+    const { connections, audio, video, resolution, room } = useSelector(({ rtc }) => ({
         connections: rtc.setting.connections,
         audio: rtc.setting.audio,
         video: rtc.setting.video,
         resolution: rtc.setting.resolution,
+        room: rtc.setting.room,
     }));
 
-    const room=1;
     const [isHost, setIsHost] = useState(false);
 
     const dispatch = useDispatch();
@@ -150,7 +150,7 @@ const TestForm = ({ history }) => {
                 acceptCall(data.signalData, data.idx);
                 //handle candidate messages
             });
-            socket.on("adjust-connections",(connections)=>dispatch(setSettings({ connections, audio, video, resolution })));
+            socket.on("adjust-connections",(connections)=>dispatch(setSettings({ connections, audio, video, resolution, room })));
             socket.on("candidate-to-callee", (data) => {
                 console.log("callee received candidate", data)
                 RTCObjects.current[data.idx].addIceCandidate(data.signalData);
@@ -266,7 +266,7 @@ const TestForm = ({ history }) => {
                 console.log("should disconnect socket")
                 socket.emit("leaveRoom", room);
                 // socket.disconnect();
-                dispatch(setSettings({ connections, audio: true, video: true, resolution }));
+                dispatch(setSettings({ connections, audio: true, video: true, resolution, room }));
             }
             history.push('/')
         } 
@@ -283,20 +283,20 @@ const TestForm = ({ history }) => {
                 closeRTC(i);
             }
         }
-        dispatch(setSettings({ connections: val, audio, video, resolution }));
+        dispatch(setSettings({ connections: val, audio, video, resolution, room }));
     }
 
     const toggleAudio = () => {
         if(localStream.current.srcObject) {
             localStream.current.srcObject.getAudioTracks()[0].enabled = !audio;
-            dispatch(setSettings({ connections, video, audio: !audio, resolution }));
+            dispatch(setSettings({ connections, video, audio: !audio, resolution, room }));
         }
     }
 
     const toggleVideo = () => {
         if(localStream.current.srcObject) {
             localStream.current.srcObject.getVideoTracks()[0].enabled = !video;
-            dispatch(setSettings({ connections, audio, video: !video, resolution }));
+            dispatch(setSettings({ connections, audio, video: !video, resolution, room }));
         }
     }
 

@@ -7,7 +7,8 @@ const initialState = {
         connections: 1,
         audio: true,
         video: true,
-        resolution: {width: {exact: 320}, height: {exact: 240}}, 
+        resolution: {width: {exact: 320}, height: {exact: 240}},
+        room: 1,
     },
 }
 
