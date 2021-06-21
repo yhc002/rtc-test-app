@@ -5,7 +5,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import Button from '@material-ui/core/Button'
 import Textfield from '@material-ui/core/Textfield';
 
-export default function TextfieldPopup({ open, message, label, setText, value, submit }) {
+export default function TextfieldPopup({ open, message, label, setText, value, cancel, submit }) {
     const handleInput = (e) => {
         let val = Number(e.target.value);
         if(val>100) {
@@ -34,6 +34,9 @@ export default function TextfieldPopup({ open, message, label, setText, value, s
                 />
             </DialogContent>
             <DialogActions>
+                <Button onClick={cancel} color="primary">
+                    취소
+                </Button>
                 <Button onClick={submit} color="primary">
                     입력
                 </Button>

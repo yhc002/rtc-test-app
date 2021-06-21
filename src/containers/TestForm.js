@@ -31,14 +31,13 @@ const TestForm = ({ history }) => {
     const [statsIsOpen, setStatsIsOpen] = useState(false);
     const [statMessages, setStatMessages] = useState([[],[]]);
     const [statInterval, setStatInterval] = useState(null);
-    const [isSender, setIsSender] = useState("sender");
 
     useEffect(() => {
         resizeWindow();
         window.addEventListener('resize', resizeWindow);
         init();
         setSocket(io("https://rtc-test-app.herokuapp.com/"));
-        return () => { // cleanup
+        return () => {
             window.removeEventListener('resize', resizeWindow);
         }
       }, []);
@@ -47,7 +46,6 @@ const TestForm = ({ history }) => {
         resizeVideos();
     },[connections]);
 
-    //initiate after socket is set
     useEffect(() => {
         if(socket)
         {
@@ -120,18 +118,15 @@ const TestForm = ({ history }) => {
         }
     }
 
-    //attempt to create/enter room
+
     const configSocket = (room) => {
         try{
-            //emit message requesting to enter/create room
             socket.emit("enterRoom", room, isHost);
-            //procedure to handle situation where an opponent entered the room
             socket.on("joined",()=>{
                 socket.emit("connections-adjusted", room, connections);
                 for(let i=0; i<connections; i++) {
                     initCall(i);
                 }
-                //handle answer message
                 socket.on("signal-to-caller", data => {
                     if(data.signalData.type === "answer") {
                         RTCObjects.current[data.idx].setRemoteDescription(data.signalData);
@@ -142,11 +137,9 @@ const TestForm = ({ history }) => {
                     } 
                 });
             });
-            //handle offer received
             socket.on("offer-to-callee", (data) => {
                 console.log("callee received offer", data)
                 acceptCall(data.signalData, data.idx);
-                //handle candidate messages
             });
             socket.on("adjust-connections",(connections)=>dispatch(setSettings({ connections, audio, video, resolution, room })));
             socket.on("candidate-to-callee", (data) => {
@@ -154,7 +147,6 @@ const TestForm = ({ history }) => {
                 RTCObjects.current[data.idx].addIceCandidate(data.signalData);
             });
             socket.on("close",i => closeRTC(i));
-            //handle ending phone call
             socket.on("end",()=>{
                 hangup(false);
             });
@@ -321,18 +313,12 @@ const TestForm = ({ history }) => {
             clearInterval(statInterval);
         }
         const interval = setInterval(async ()=>{
-            let messages=['',''];
-            if(RTCObjects.current[idx] && RTCObjects.current[idx].pcLocal){
-                const localStat = await RTCObjects.current[idx].pcLocal.getStats(null).then(
+            let messages;
+            if(RTCObjects.current[idx]){
+                const stats = await RTCObjects.current[idx].getStats(null).then(
                     results=>results, err => err.toString()
                 )
-                messages[0] = localStat;
-            }
-            if(RTCObjects.current[idx] && RTCObjects.current[idx].pcRemote){
-                const remoteStat = await RTCObjects.current[idx].pcRemote.getStats(null).then(
-                    results=>results, err => err.toString()
-                )
-                messages[1] = remoteStat;
+                messages = stats;
             }
             setStatMessages(messages);
         },1000);
@@ -350,6 +336,7 @@ const TestForm = ({ history }) => {
         <Test
             audio={audio}
             video={video}
+            isHost={isHost}
             setConnections={(val)=>adjustConnection(val)}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
@@ -362,8 +349,6 @@ const TestForm = ({ history }) => {
             openStats={(idx)=>openStats(idx)}
             closeStats={closeStats}
             statMessages={statMessages}
-            isSender={isSender}
-            setIsSender={setIsSender}
         />
     );
 }

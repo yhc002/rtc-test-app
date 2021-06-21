@@ -42,9 +42,6 @@ const HomeUI = ({
                                 </div> 
                             </Grid>
                             <Grid item>
-                                <Button onClick={()=>setIsOpen(true)}>Connections: {connections}</Button>
-                            </Grid>
-                            <Grid item>
                                 <TextField label="채팅방 id" value={room} onChange={(e)=>setRoom(e.target.value)}/>
                             </Grid>
                             <Grid item>
@@ -72,7 +69,11 @@ const HomeUI = ({
                 label="peer"
                 setText={setConnections}
                 value={connections}
-                submit={()=>{setIsOpen(false); initCall(true)}}
+                cancel={()=>setIsOpen(false)}
+                submit={()=>{
+                    setIsOpen(false)
+                    initCall(true)}
+                }
             />
         </React.Fragment>
     )
