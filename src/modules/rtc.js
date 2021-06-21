@@ -8,7 +8,7 @@ const initialState = {
         audio: true,
         video: true,
         resolution: {width: {exact: 320}, height: {exact: 240}},
-        room: 1,
+        room: '',
     },
 }
 

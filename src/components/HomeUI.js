@@ -1,12 +1,13 @@
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
+import TextField from '@material-ui/core/TextField';
 import { Videocam, VideocamOff, Mic, MicOff } from '@material-ui/icons';
 import TextInputPopup from './popups/TextInputPopup';
 import { useStyles } from '../MuiTheme';
 
 const HomeUI = ({
-    connections, setConnections, setResolution, audio, video, toggleAudio, toggleVideo, initCall, localStream, foundLocal, isOpen, setIsOpen 
+    connections, setConnections, setResolution, setRoom, audio, video, room, toggleAudio, toggleVideo, initCall, localStream, isOpen, setIsOpen 
 }) => {
     const classes = useStyles();
 
@@ -44,23 +45,22 @@ const HomeUI = ({
                                 <Button onClick={()=>setIsOpen(true)}>Connections: {connections}</Button>
                             </Grid>
                             <Grid item>
+                                <TextField label="채팅방 id" value={room} onChange={(e)=>setRoom(e.target.value)}/>
+                            </Grid>
+                            <Grid item>
                                 <Grid container spacing={1}>
                                     <Grid item>
-                                        <Button variant="contained" className={classes.roundButton} onClick={()=>setConnections(connections+1)} disabled={connections>=100}>
-                                            +
+                                        <Button disabled={!room} variant="contained" onClick={()=>setIsOpen(true)}>
+                                            신규 방 생성
                                         </Button>
                                     </Grid>
                                     <Grid item>
-                                        <Button variant="contained" className={classes.roundButton} onClick={()=>setConnections(connections-1)} disabled={connections<=1}>
-                                            -
+                                        <Button disabled={!room} variant="contained" onClick={()=>initCall(false)}>
+                                            기존 방 입장
                                         </Button>
                                     </Grid>
                                 </Grid>
-                            </Grid>
-                            <Grid item>
-                                <Button variant="contained" onClick={initCall}>
-                                    지금 참여하기
-                                </Button>
+                                
                             </Grid>
                         </Grid>
                     </Grid>
@@ -72,7 +72,7 @@ const HomeUI = ({
                 label="peer"
                 setText={setConnections}
                 value={connections}
-                submit={()=>setIsOpen(false)}
+                submit={()=>{setIsOpen(false); initCall(true)}}
             />
         </React.Fragment>
     )

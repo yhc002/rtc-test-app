@@ -16,7 +16,6 @@ const HomeForm = ({ history }) => {
     const dispatch = useDispatch();
 
     const localStream=useRef();
-    const [foundLocal, setFoundLocal] = useState(false);
     const [isOpen,setIsOpen] = useState(false);
 
     useEffect(()=>{getMedia(resolution)},[]);
@@ -38,24 +37,22 @@ const HomeForm = ({ history }) => {
                 controls.style.width = `${settings.width}px`;
                 controls.style.height = `${settings.height}px`;
             });
-            setFoundLocal(true);
         } catch (e) {
             console.log("getUserMedia error",e)
-            setFoundLocal(false);
         }
     }
 
 
-    const initCall = (id) => {
+    const initCall = (isHost) => {
         if(localStream.current.srcObject) {
             console.log("stop track")
             localStream.current.srcObject.getTracks().forEach(track => {
                 track.stop();
             });
-            dispatch(setSettings({ connections, video, audio, resolution, room: id }));
+            dispatch(setSettings({ connections, video, audio, resolution, room }));
             localStream.current=null;
         }
-        history.push('./test');
+        history.push('./test',{isHost});
     }
 
     const toggleAudio = () => {
@@ -77,14 +74,15 @@ const HomeForm = ({ history }) => {
         <Home
             audio={audio}
             video={video}
+            room={room}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
             initCall={initCall}
             connections={connections}
-            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video, resolution }))}
+            setConnections={(val)=>dispatch(setSettings({ connections: val, audio, video, resolution, room }))}
             setResolution={setResolution}
+            setRoom={(val)=>dispatch(setSettings({ connections, audio, video, resolution, room: val }))}
             localStream={localStream}
-            foundLocal={foundLocal}
             history={history} 
             isOpen={isOpen}
             setIsOpen={setIsOpen}

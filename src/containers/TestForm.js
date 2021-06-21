@@ -14,8 +14,7 @@ const TestForm = ({ history }) => {
         room: rtc.setting.room,
     }));
 
-    const [isHost, setIsHost] = useState(false);
-
+    const isHost = history.location.state && history.location.state.isHost;
     const dispatch = useDispatch();
 
     const localStream=useRef();
@@ -125,10 +124,9 @@ const TestForm = ({ history }) => {
     const configSocket = (room) => {
         try{
             //emit message requesting to enter/create room
-            socket.emit("enterRoom", room);
+            socket.emit("enterRoom", room, isHost);
             //procedure to handle situation where an opponent entered the room
             socket.on("joined",()=>{
-                setIsHost(true);
                 socket.emit("connections-adjusted", room, connections);
                 for(let i=0; i<connections; i++) {
                     initCall(i);
@@ -160,8 +158,19 @@ const TestForm = ({ history }) => {
             socket.on("end",()=>{
                 hangup(false);
             });
-            socket.once("joinResult",(result)=>{
-                console.log('joinResult',result);
+            socket.once("joinResult",(enter, message)=>{
+                if(!enter){
+                    alert(message);
+                    if(localStream.current && localStream.current.srcObject) {
+                        localStream.current.srcObject.getTracks().forEach(track => {
+                            track.stop();
+                        });
+                        localStream.current=null;
+                    }
+                    socket.disconnect();
+                    dispatch(setSettings({ connections, audio: true, video: true, resolution, room: '' }));
+                    history.push('/')
+                }
             });
         } catch(error){
             console.log("room enter error", error);
@@ -248,7 +257,7 @@ const TestForm = ({ history }) => {
         }
         if(isHost) {
             socket.emit("close",room,i);
-        }//if host
+        }
     }
 
     const hangup = (shouldLeave) => {
@@ -265,9 +274,8 @@ const TestForm = ({ history }) => {
             if(socket) {
                 console.log("should disconnect socket")
                 socket.emit("leaveRoom", room);
-                // socket.disconnect();
-                dispatch(setSettings({ connections, audio: true, video: true, resolution, room }));
             }
+            dispatch(setSettings({ connections, audio: true, video: true, resolution, room: '' }));
             history.push('/')
         } 
     }
