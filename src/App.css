@@ -13,6 +13,7 @@ div#await-main {
   align-items: center;
   width: 100%;
   height: 98vh;
+  background-color: white;
 }
 
 div#await-video-container {
@@ -54,6 +55,7 @@ div#call-main {
   flex-direction: column;
   width: 100%;
   height: 98vh;
+  background-color: white;
 }
 
 div#call-videos {
